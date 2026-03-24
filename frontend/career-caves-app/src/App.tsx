@@ -23,7 +23,8 @@ function App() {
       {/* 1. Sidebar Navigation */}
       <nav className="sidebar">
         <div className="sidebar-header">
-          <h1 className="logo-text">Gator Closet</h1>
+          {/* ADD: Logo will go here once we make one */}
+          <h1 className="logo-text">Career Caves</h1>
           <div className="verified-badge">UF Verified</div>
         </div>
 
