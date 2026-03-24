@@ -1,0 +1,52 @@
+:root {
+  /* Brand Colors */
+  --ufl-blue: #0021A5;
+  --ufl-orange: #FA4616;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-main: #1a1a1a;
+  --text-muted: #65676b;
+  --border-color: #e5e4e7;
+  
+  /* Status Colors */
+  --status-active: #14AE5C;
+  --status-confirmed: #0D99FF;
+  --status-completed: #8E8E8E;
+
+  /* Layout Constants */
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+[data-preferred-theme="dark"] {
+  --bg-primary: #16171d;
+  --bg-secondary: #1f2028;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border-color: #2e303a;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+  font-size: 48px;
+  letter-spacing: -1.2px;
+  margin: 24px 0;
+}
+
+h2 { font-size: 24px; margin-bottom: 16px; }
+
+button { cursor: pointer; font-family: inherit; }
+
+#root {
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+}
