@@ -69,6 +69,16 @@
   color: var(--text-main);
 }
 
+.nav-item {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.toggle-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
 .nav-item.active,
 .toggle-btn.active {
   background: var(--ufl-blue);
@@ -165,4 +175,23 @@
   border-radius: 6px;
   background: var(--bg-secondary);
   color: var(--text-main);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: min(760px, 100%);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
 }
