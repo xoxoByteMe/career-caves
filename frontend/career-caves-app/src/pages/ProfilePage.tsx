@@ -1,8 +1,8 @@
 export default function ProfilePage() {
   return (
-    <div style={{ padding: '32px' }}>
+    <div className="page-padding">
       <h2>Profile</h2>
-      <p style={{ color: 'var(--text-muted)' }}>Manage your measurements, preferences, and reputation.</p>
+      <p className="text-muted">Manage your measurements, preferences, and reputation.</p>
     </div>
   );
 }

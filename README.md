@@ -38,6 +38,21 @@ career-caves/
 - Frontend sends access tokens to backend routes for protected operations.
 - Backend verifies tokens with Supabase and performs server-side CRUD logic.
 - Supabase stores data and enforces Row Level Security (RLS).
+- Listing images are uploaded to a **Supabase Storage bucket** (`caves-images`) via the backend using the Storage REST API, then served as public URLs.
+
+### Image Upload Flow
+
+1. Frontend sends a multipart form (`FormData`) with the image file to `POST /api/listings`.
+2. Backend (Express + multer) receives the file in memory.
+3. Backend uploads the raw bytes directly to Supabase Storage via the REST API (`/storage/v1/object/...`) with the service role key.
+4. Images are stored at `listings/{listing_id}/{uuid}.{ext}` inside the `caves-images` bucket.
+5. The public URL is saved to the `listingimages` table and returned in listing responses.
+
+### Supabase Storage Setup
+
+1. Go to **Supabase Dashboard → Storage** and create a bucket named `caves-images`.
+2. Set the bucket to **Public** so images can be accessed via public URLs.
+3. Ensure `SUPABASE_LISTING_IMAGES_BUCKET=caves-images` is set in backend `.env`.
 
 ## Local Development
 
@@ -79,35 +94,29 @@ Backend `.env` values:
 - `CORS_ORIGIN=http://localhost:5173`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY` (server-only secret)
+- `SUPABASE_LISTING_IMAGES_BUCKET=caves-images`
 
 ### Database Migrations
 Store migration files in `backend/supabase/migrations` and run all Supabase migration commands from the `backend` folder.
 
 Create a new migration file:
 
-```bash
-cd backend
-npx supabase migration new create_listings_table
-```
-
-This creates a timestamped SQL file in `backend/supabase/migrations`. Add your SQL schema changes to that file, then apply them to the linked remote database:
+1. Open your Supabase project dashboard.
+2. Go to SQL Editor and apply your schema changes there (or paste SQL from your migration).
+3. Create a local migration file:
 
 ```bash
 cd backend
-npx supabase db push
+npx supabase migration new <descriptive_name>
 ```
 
-To pull the current remote schema into a migration file:
-
-```bash
-cd backend
-npx supabase db pull
-```
+4. Paste the exact SQL that was applied in the dashboard into that migration file.
+5. Commit the migration file so teammates can replay the same change history.
 
 
 Notes:
 - Use `npx supabase ...` if `supabase ...` is not recognized in PowerShell.
-- `db pull` and `db dump` may require Docker Desktop on Windows, depending on your CLI setup.
+- `db pull` and `db dump` require local container tooling in many Supabase CLI flows because the CLI creates a shadow/local Postgres environment to diff and generate schema output.
 - The safest workflow is: create a migration, write the SQL deliberately, run `db push`, then commit the migration file.
 
 ### Starter API Routes

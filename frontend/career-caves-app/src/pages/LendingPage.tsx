@@ -6,6 +6,8 @@ export default function LendingPage() {
   const [title, setTitle] = useState('');
   const [pricePerDay, setPricePerDay] = useState('');
   const [category, setCategory] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
@@ -26,17 +28,22 @@ export default function LendingPage() {
     setIsSubmitting(true);
     setFormMessage(null);
 
+    // For now, user_id is hardcoded to 1 since we don't have authentication set up, but this should be updated in the future to use the actual logged-in user's ID
     try {
       await createListing({
+        user_id : 1,
         title: title.trim(),
         pricePerDay: parsedPrice,
         category: category.trim() || undefined,
+        image: imageFile ?? undefined,
       });
 
       setFormMessage('Listing created successfully.');
       setTitle('');
       setPricePerDay('');
       setCategory('');
+      setImageFile(null);
+      setFileInputKey((current) => current + 1);
     } catch (error) {
       setFormMessage(error instanceof Error ? error.message : 'Failed to create listing.');
     } finally {
@@ -45,23 +52,13 @@ export default function LendingPage() {
   }
 
   return (
-    <div style={{ padding: '32px' }}>
+    <div className="page-padding">
       <h2>Lending</h2>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+      <p className="section-subtitle">
         List professional items and manage active lending listings.
       </p>
       {!showListForm && (
-        <button
-          onClick={() => setShowListForm(true)}
-          style={{
-            background: 'var(--ufl-blue)',
-            color: 'white',
-            border: 'none',
-            padding: '10px 16px',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-          }}
-        >
+        <button onClick={() => setShowListForm(true)} className="btn-primary">
           Open List Item Modal
         </button>
       )}
@@ -70,15 +67,15 @@ export default function LendingPage() {
         <div className="modal-overlay" onClick={() => setShowListForm(false)}>
           <form className="modal-content" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
             <h2>List a Professional Item</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+            <p className="modal-subtitle">
               Provide measurements to help other Gators find the perfect fit.
             </p>
 
-            {formMessage && <p style={{ color: formMessage.includes('successfully') ? '#027a48' : '#b42318' }}>{formMessage}</p>}
+            {formMessage && <p className={formMessage.includes('successfully') ? 'text-success' : 'text-error'}>{formMessage}</p>}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="form-grid">
               <div className="form-group">
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>Item Title</label>
+                <label className="form-label">Item Title</label>
                 <input
                   className="form-input"
                   placeholder="e.g. Zara Tailored Blazer"
@@ -87,7 +84,7 @@ export default function LendingPage() {
                 />
               </div>
               <div className="form-group">
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>Price per Day ($)</label>
+                <label className="form-label">Price per Day ($)</label>
                 <input
                   className="form-input"
                   type="number"
@@ -97,7 +94,7 @@ export default function LendingPage() {
                 />
               </div>
               <div className="form-group">
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>Category</label>
+                <label className="form-label">Category</label>
                 <input
                   className="form-input"
                   placeholder="e.g. Blazer"
@@ -106,38 +103,26 @@ export default function LendingPage() {
                 />
               </div>
               <div className="form-group">
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>Status</label>
+                <label className="form-label">Status</label>
                 <input className="form-input" value="Ready to list" readOnly />
+              </div>
+              <div className="form-group form-group--full">
+                <label className="form-label">Item Image (optional)</label>
+                <input
+                  key={fileInputKey}
+                  className="form-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-              <button
-                onClick={() => setShowListForm(false)}
-                type="button"
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  background: 'none',
-                }}
-              >
+            <div className="form-actions">
+              <button onClick={() => setShowListForm(false)} type="button" className="btn-cancel">
                 Cancel
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '8px',
-                  background: 'var(--ufl-blue)',
-                  color: 'white',
-                  border: 'none',
-                  fontWeight: 'bold',
-                }}
-              >
+              <button type="submit" disabled={isSubmitting} className="btn-submit">
                 {isSubmitting ? 'Posting...' : 'Post Listing'}
               </button>
             </div>
