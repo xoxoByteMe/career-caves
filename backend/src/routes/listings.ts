@@ -87,6 +87,10 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
     }
   }
 
+  // ── Step 1: Insert the listing row into the "listings" table ──
+  // This creates the database record first so we have a listing_id to
+  // organise the image under in storage. .select('*').single() returns
+  // the newly created row so we can read listing_id immediately.
   const { data: listingData, error: listingError } = await supabaseAdmin
     .from('listings')
     .insert({
@@ -111,10 +115,25 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
       return res.status(500).json({ error: 'Unable to resolve listing id for image upload' });
     }
 
+    // ── Step 2: Build a unique storage path for the image ──
+    // Images are stored in the Supabase Storage bucket at:
+    //   listings/{listing_id}/{random-uuid}.{extension}
+    // The UUID prevents filename collisions if multiple images are uploaded.
     const safeExtension = allowedImageMimeTypes[req.file.mimetype];
     const imagePath = `listings/${listingId}/${randomUUID()}.${safeExtension}`;
 
-    // Upload via Supabase Storage REST API (bypasses JS client buffer issues)
+    // ── Step 3: Upload the raw image bytes to Supabase Storage ──
+    // We call the Supabase Storage REST API directly with fetch() instead
+    // of using the JS client's .upload() method. The JS client can corrupt
+    // Node.js Buffer data during serialisation, so sending the raw bytes
+    // via fetch with the correct Content-Type header avoids that issue.
+    //
+    // Required headers:
+    //   - apikey: the service role key (needed by the Supabase API gateway)
+    //   - Authorization: Bearer token for auth (same service role key)
+    //   - Content-Type: the image MIME type (e.g. image/jpeg) so Supabase
+    //     stores it with the correct type and browsers can render it
+    //   - x-upsert: 'false' to prevent overwriting existing files
     const uploadUrl = `${env.supabaseUrl}/storage/v1/object/${encodeURIComponent(listingImagesBucket)}/${imagePath}`;
     const uploadRes = await fetch(uploadUrl, {
       method: 'POST',
@@ -127,6 +146,8 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
       body: new Uint8Array(req.file.buffer),
     });
 
+    // If the upload failed, roll back the listing row we created in Step 1
+    // so we don't leave orphaned listings in the database.
     if (!uploadRes.ok) {
       const errText = await uploadRes.text();
       await rollbackListingCreation(listingId);
@@ -139,11 +160,22 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: errText || 'Image upload failed' });
     }
 
+    // ── Step 4: Generate the public URL for the uploaded image ──
+    // Since the bucket is set to public in Supabase, getPublicUrl() returns
+    // a URL like: https://<project>.supabase.co/storage/v1/object/public/caves-images/listings/27/abc.jpg
+    // This URL can be used directly in <img> tags on the frontend.
     const {
       data: { publicUrl },
     } = supabaseAdmin.storage.from(listingImagesBucket).getPublicUrl(imagePath);
     imageUrl = publicUrl;
 
+    // ── Step 5: Save the image URL to the "listingimages" table ──
+    // This creates a row linking the listing_id to the public URL of the
+    // image we just uploaded. The frontend GET /api/listings endpoint can
+    // then look up images by listing_id (either via this table or by
+    // listing files in the storage bucket directly).
+    // If this insert fails, we clean up both the storage file and the
+    // listing row to keep everything consistent.
     const { error: listingImageError } = await supabaseAdmin.from('listingimages').insert({
       listing_id: listingId,
       image_url: imageUrl,
