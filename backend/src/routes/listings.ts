@@ -191,4 +191,144 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
   return res.status(201).json({ data: { ...listingData, image_url: imageUrl } });
 });
 
+listingsRouter.patch('/:id', upload.single('image'), async (req, res) => {
+  const listingId = Number(req.params.id);
+  if (Number.isNaN(listingId)) {
+    return res.status(400).json({ error: 'Invalid listing id' });
+  }
+
+  const { title, pricePerDay, category, user_id } = req.body as {
+    user_id?: string;
+    title?: string;
+    pricePerDay?: string;
+    category?: string;
+  };
+
+  const parsedUserId = Number(user_id);
+  const parsedPricePerDay = Number(pricePerDay);
+
+  if (!title || Number.isNaN(parsedPricePerDay) || parsedPricePerDay <= 0) {
+    return res.status(400).json({ error: 'title and a positive pricePerDay are required' });
+  }
+
+  if (Number.isNaN(parsedUserId)) {
+    return res.status(400).json({ error: 'user_id is required and must be a number' });
+  }
+
+  // ── Verify ownership ──────────────────────────────────────────────────────
+  const { data: existingListing, error: fetchError } = await supabaseAdmin
+    .from('listings')
+    .select('user_id')
+    .eq('listing_id', listingId)
+    .single();
+
+  if (fetchError || !existingListing) {
+    return res.status(404).json({ error: 'Listing not found' });
+  }
+
+  if ((existingListing as { user_id: number }).user_id !== parsedUserId) {
+    return res.status(403).json({ error: 'You do not own this listing' });
+  }
+
+  // ── Validate image if provided ────────────────────────────────────────────
+  if (req.file) {
+    if (req.file.size === 0) {
+      return res.status(400).json({ error: 'Uploaded image file is empty' });
+    }
+    if (!allowedImageMimeTypes[req.file.mimetype]) {
+      return res.status(400).json({
+        error: 'Unsupported image type. Use JPEG, PNG, WebP, or GIF.',
+      });
+    }
+  }
+
+  // ── Update the listing row ────────────────────────────────────────────────
+  const { data: updatedListing, error: updateError } = await supabaseAdmin
+    .from('listings')
+    .update({
+      title,
+      price_per_day: parsedPricePerDay,
+      category: category ?? null,
+    })
+    .eq('listing_id', listingId)
+    .select('*')
+    .single();
+
+  if (updateError) {
+    return res.status(400).json({ error: updateError.message });
+  }
+
+  let imageUrl: string | null = null;
+
+  if (req.file) {
+    // Remove existing images from storage before uploading the new one
+    const { data: existingFiles } = await supabaseAdmin.storage
+      .from(listingImagesBucket)
+      .list(`listings/${listingId}`);
+
+    if (existingFiles && existingFiles.length > 0) {
+      const filesToDelete = existingFiles.map((f) => `listings/${listingId}/${f.name}`);
+      await supabaseAdmin.storage.from(listingImagesBucket).remove(filesToDelete);
+    }
+
+    const safeExtension = allowedImageMimeTypes[req.file.mimetype];
+    const imagePath = `listings/${listingId}/${randomUUID()}.${safeExtension}`;
+
+    const uploadUrl = `${env.supabaseUrl}/storage/v1/object/${encodeURIComponent(listingImagesBucket)}/${imagePath}`;
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': env.supabaseServiceRoleKey,
+        'Authorization': `Bearer ${env.supabaseServiceRoleKey}`,
+        'Content-Type': req.file.mimetype,
+        'x-upsert': 'false',
+      },
+      body: new Uint8Array(req.file.buffer),
+    });
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      return res.status(400).json({ error: errText || 'Image upload failed' });
+    }
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from(listingImagesBucket)
+      .getPublicUrl(imagePath);
+    imageUrl = publicUrl;
+
+    // Upsert into listingimages table
+    const { data: existingImageRow } = await supabaseAdmin
+      .from('listingimages')
+      .select('image_id')
+      .eq('listing_id', listingId)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingImageRow) {
+      await supabaseAdmin
+        .from('listingimages')
+        .update({ image_url: imageUrl })
+        .eq('listing_id', listingId);
+    } else {
+      await supabaseAdmin
+        .from('listingimages')
+        .insert({ listing_id: listingId, image_url: imageUrl });
+    }
+  } else {
+    // Return existing image URL if no new image was uploaded
+    const { data: files } = await supabaseAdmin.storage
+      .from(listingImagesBucket)
+      .list(`listings/${listingId}`);
+
+    if (files && files.length > 0) {
+      const { data: { publicUrl } } = supabaseAdmin.storage
+        .from(listingImagesBucket)
+        .getPublicUrl(`listings/${listingId}/${files[0].name}`);
+      imageUrl = publicUrl;
+    }
+  }
+
+  return res.json({ data: { ...updatedListing, image_url: imageUrl } });
+});
+
 export default listingsRouter;

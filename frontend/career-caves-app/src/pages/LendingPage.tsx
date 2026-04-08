@@ -1,8 +1,20 @@
-import { useState } from 'react';
-import { createListing } from '../lib/api';
+import { useState, useEffect } from 'react';
+import { createListing, updateListing, getListings, type Listing } from '../lib/api';
+
+const CATEGORY_OPTIONS = ['shoes', 'shirts', 'jacket', 'pants', 'accessory', 'other'] as const;
 
 export default function LendingPage() {
-  const [showListForm, setShowListForm] = useState(true);
+  // ── Simulated Auth (temporary — no real login yet) ────────────────────────
+  const [simulatedUserId, setSimulatedUserId] = useState(1);
+  const [userIdInput, setUserIdInput] = useState('1');
+
+  // ── My Listings ───────────────────────────────────────────────────────────
+  const [myListings, setMyListings] = useState<Listing[]>([]);
+  const [loadingListings, setLoadingListings] = useState(false);
+  const [listingsError, setListingsError] = useState<string | null>(null);
+
+  // ── Create modal ──────────────────────────────────────────────────────────
+  const [showListForm, setShowListForm] = useState(false);
   const [title, setTitle] = useState('');
   const [pricePerDay, setPricePerDay] = useState('');
   const [category, setCategory] = useState('');
@@ -11,11 +23,48 @@ export default function LendingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  // ── Edit modal ────────────────────────────────────────────────────────────
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editPricePerDay, setEditPricePerDay] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editFileInputKey, setEditFileInputKey] = useState(0);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [editFormMessage, setEditFormMessage] = useState<string | null>(null);
+
+  function fetchMyListings(userId: number) {
+    setLoadingListings(true);
+    setListingsError(null);
+    getListings()
+      .then((all) => setMyListings(all.filter((l) => l.user_id === userId)))
+      .catch((err) =>
+        setListingsError(err instanceof Error ? err.message : 'Failed to load listings'),
+      )
+      .finally(() => setLoadingListings(false));
+  }
+
+  useEffect(() => {
+    fetchMyListings(simulatedUserId);
+  }, [simulatedUserId]);
+
+  function applyUserId() {
+    const parsed = Number(userIdInput);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      setSimulatedUserId(parsed);
+    }
+  }
+
+  async function handleCreateSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!title.trim() || !pricePerDay.trim()) {
       setFormMessage('Title and price per day are required.');
+      return;
+    }
+
+    if (!category) {
+      setFormMessage('Category is required.');
       return;
     }
 
@@ -28,13 +77,12 @@ export default function LendingPage() {
     setIsSubmitting(true);
     setFormMessage(null);
 
-    // For now, user_id is hardcoded to 1 since we don't have authentication set up, but this should be updated in the future to use the actual logged-in user's ID
     try {
       await createListing({
-        user_id : 1,
+        user_id: simulatedUserId,
         title: title.trim(),
         pricePerDay: parsedPrice,
-        category: category.trim() || undefined,
+        category,
         image: imageFile ?? undefined,
       });
 
@@ -43,7 +91,8 @@ export default function LendingPage() {
       setPricePerDay('');
       setCategory('');
       setImageFile(null);
-      setFileInputKey((current) => current + 1);
+      setFileInputKey((k) => k + 1);
+      fetchMyListings(simulatedUserId);
     } catch (error) {
       setFormMessage(error instanceof Error ? error.message : 'Failed to create listing.');
     } finally {
@@ -51,27 +100,147 @@ export default function LendingPage() {
     }
   }
 
+  function openEditModal(listing: Listing) {
+    setEditingListing(listing);
+    setEditTitle(listing.title);
+    setEditPricePerDay(String(listing.price_per_day));
+    setEditCategory(listing.category ?? '');
+    setEditImageFile(null);
+    setEditFileInputKey((k) => k + 1);
+    setEditFormMessage(null);
+  }
+
+  async function handleEditSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingListing) return;
+
+    if (!editTitle.trim() || !editPricePerDay.trim()) {
+      setEditFormMessage('Title and price per day are required.');
+      return;
+    }
+
+    if (!editCategory) {
+      setEditFormMessage('Category is required.');
+      return;
+    }
+
+    const parsedPrice = Number(editPricePerDay);
+    if (Number.isNaN(parsedPrice) || parsedPrice <= 0) {
+      setEditFormMessage('Price per day must be a valid positive number.');
+      return;
+    }
+
+    const id = editingListing.listing_id ?? editingListing.id;
+    if (!id) {
+      setEditFormMessage('Cannot update: listing has no id.');
+      return;
+    }
+
+    setIsEditSubmitting(true);
+    setEditFormMessage(null);
+
+    try {
+      await updateListing(id, {
+        user_id: simulatedUserId,
+        title: editTitle.trim(),
+        pricePerDay: parsedPrice,
+        category: editCategory,
+        image: editImageFile ?? undefined,
+      });
+
+      setEditFormMessage('Listing updated successfully.');
+      fetchMyListings(simulatedUserId);
+    } catch (error) {
+      setEditFormMessage(error instanceof Error ? error.message : 'Failed to update listing.');
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  }
+
   return (
     <div className="page-padding">
       <h2>Lending</h2>
       <p className="section-subtitle">
-        List professional items and manage active lending listings.
+        List professional items and manage your active lending listings.
       </p>
-      {!showListForm && (
-        <button onClick={() => setShowListForm(true)} className="btn-primary">
-          Open List Item Modal
+
+      {/* ── Simulated user selector (temporary — replace with real auth) ── */}
+      <div className="simulated-auth-bar">
+        <span className="simulated-auth-label">Temp — acting as User ID:</span>
+        <input
+          className="simulated-auth-input"
+          type="number"
+          min={1}
+          value={userIdInput}
+          onChange={(e) => setUserIdInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && applyUserId()}
+        />
+        <button className="btn-primary" type="button" onClick={applyUserId}>
+          Apply
         </button>
+      </div>
+
+      {/* ── Your Listings ── */}
+      <div className="lending-section-header">
+        <h3 style={{ margin: 0 }}>Your Listings</h3>
+        <button onClick={() => { setShowListForm(true); setFormMessage(null); }} className="btn-primary">
+          + New Listing
+        </button>
+      </div>
+
+      {loadingListings && <p>Loading your listings...</p>}
+      {listingsError && <p className="text-error">{listingsError}</p>}
+      {!loadingListings && !listingsError && myListings.length === 0 && (
+        <p className="text-muted">You have no listings yet.</p>
       )}
 
+      <div className="lending-grid">
+        {myListings.map((listing) => {
+          const id = listing.listing_id ?? listing.id;
+          return (
+            <div key={id} className="lending-card">
+              {listing.image_url ? (
+                <img src={listing.image_url} alt={listing.title} className="lending-card-img" />
+              ) : (
+                <div className="lending-card-no-img">No Image</div>
+              )}
+              <div className="lending-card-body">
+                <h4 className="lending-card-title">{listing.title}</h4>
+                {listing.category && (
+                  <p className="lending-card-category">{listing.category}</p>
+                )}
+                <p className="lending-card-price">${listing.price_per_day}/day</p>
+                <button
+                  className="btn-edit"
+                  type="button"
+                  onClick={() => openEditModal(listing)}
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Create Listing Modal ── */}
       {showListForm && (
         <div className="modal-overlay" onClick={() => setShowListForm(false)}>
-          <form className="modal-content" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
+          <form
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleCreateSubmit}
+          >
             <h2>List a Professional Item</h2>
             <p className="modal-subtitle">
-              Provide measurements to help other Gators find the perfect fit.
+              Provide details to help other Gators find the perfect fit.
             </p>
 
-            {formMessage && <p className={formMessage.includes('successfully') ? 'text-success' : 'text-error'}>{formMessage}</p>}
+            {formMessage && (
+              <p className={formMessage.includes('successfully') ? 'text-success' : 'text-error'}>
+                {formMessage}
+              </p>
+            )}
 
             <div className="form-grid">
               <div className="form-group">
@@ -95,12 +264,21 @@ export default function LendingPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Category</label>
-                <input
+                <select
                   className="form-input"
-                  placeholder="e.g. Blazer"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                />
+                  required
+                >
+                  <option value="" disabled>
+                    Select a category
+                  </option>
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Status</label>
@@ -119,11 +297,104 @@ export default function LendingPage() {
             </div>
 
             <div className="form-actions">
-              <button onClick={() => setShowListForm(false)} type="button" className="btn-cancel">
+              <button
+                onClick={() => setShowListForm(false)}
+                type="button"
+                className="btn-cancel"
+              >
                 Cancel
               </button>
               <button type="submit" disabled={isSubmitting} className="btn-submit">
                 {isSubmitting ? 'Posting...' : 'Post Listing'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── Edit Listing Modal ── */}
+      {editingListing && (
+        <div className="modal-overlay" onClick={() => setEditingListing(null)}>
+          <form
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleEditSubmit}
+          >
+            <h2>Edit Listing</h2>
+            <p className="modal-subtitle">
+              Update the details for &ldquo;{editingListing.title}&rdquo;.
+            </p>
+
+            {editFormMessage && (
+              <p
+                className={
+                  editFormMessage.includes('successfully') ? 'text-success' : 'text-error'
+                }
+              >
+                {editFormMessage}
+              </p>
+            )}
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label className="form-label">Item Title</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. Zara Tailored Blazer"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Price per Day ($)</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  placeholder="15"
+                  value={editPricePerDay}
+                  onChange={(e) => setEditPricePerDay(e.target.value)}
+                />
+              </div>
+              <div className="form-group form-group--full">
+                <label className="form-label">Category</label>
+                <select
+                  className="form-input"
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    Select a category
+                  </option>
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group form-group--full">
+                <label className="form-label">Replace Image (optional)</label>
+                <input
+                  key={editFileInputKey}
+                  className="form-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEditImageFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button
+                onClick={() => setEditingListing(null)}
+                type="button"
+                className="btn-cancel"
+              >
+                Cancel
+              </button>
+              <button type="submit" disabled={isEditSubmitting} className="btn-submit">
+                {isEditSubmitting ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>

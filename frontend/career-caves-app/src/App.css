@@ -466,3 +466,108 @@
   border: none;
   font-weight: bold;
 }
+
+/* Simulated auth bar (temporary — replace with real auth) */
+.simulated-auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.simulated-auth-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #92400e;
+}
+
+.simulated-auth-input {
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+/* Lending page listing grid */
+.lending-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.lending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.lending-card {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-bg, #fff);
+}
+
+.lending-card-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.lending-card-no-img {
+  width: 100%;
+  height: 180px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.lending-card-body {
+  padding: 14px;
+}
+
+.lending-card-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.lending-card-category {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.lending-card-price {
+  margin: 0 0 12px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.btn-edit {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: none;
+  color: var(--ufl-blue);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-edit:hover {
+  background: var(--bg-secondary);
+}
