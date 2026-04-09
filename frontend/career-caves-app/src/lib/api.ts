@@ -1,6 +1,7 @@
 export interface Listing {
   listing_id?: number;
   id?: number;
+  user_id?: number;
   title: string;
   price_per_day: number;
   category?: string | null;
@@ -67,5 +68,37 @@ export async function createListing(input: {
   });
 
   // parseJsonResponse throws on non-2xx and returns payload.data on success.
+  return parseJsonResponse<Listing>(response);
+}
+
+// listingsRouter.patch('/:id', ...)
+export async function updateListing(
+  listingId: number,
+  input: {
+    user_id: number;
+    title: string;
+    pricePerDay: number;
+    category?: string;
+    image?: File;
+  },
+): Promise<Listing> {
+  const formData = new FormData();
+  formData.append('user_id', String(input.user_id));
+  formData.append('title', input.title);
+  formData.append('pricePerDay', String(input.pricePerDay));
+
+  if (input.category) {
+    formData.append('category', input.category);
+  }
+
+  if (input.image) {
+    formData.append('image', input.image);
+  }
+
+  const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}`, {
+    method: 'PATCH',
+    body: formData,
+  });
+
   return parseJsonResponse<Listing>(response);
 }
