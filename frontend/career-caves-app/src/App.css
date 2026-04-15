@@ -163,37 +163,119 @@
 
 /* Form Styles */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .form-input {
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-secondary);
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #f8fafc;
   color: var(--text-main);
+  font-size: 14px;
+  min-width: 0;
+}
+
+.form-input:focus-visible,
+.upload-zone:focus-visible {
+  outline: 3px solid rgba(13, 110, 253, 0.25);
+  outline-offset: 2px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.form-group--full {
+  grid-column: 1 / -1;
+}
+
+.upload-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-direction: column;
+  min-height: 170px;
+  padding: 20px;
+  border: 1px dashed #9ca3af;
+  border-radius: 18px;
+  background: #f8fafc;
+  color: var(--text-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.upload-zone:hover {
+  background: #eef4ff;
+  border-color: #9bb4ff;
+}
+
+.upload-zone-icon {
+  font-size: 24px;
+}
+
+.upload-zone input[type="file"] {
+  display: none;
+}
+
+.condition-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.condition-chip {
+  padding: 10px 14px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.condition-chip--active {
+  background: #eef4ff;
+  border-color: #7c9bff;
+  color: #0f3bf4;
+}
+
+.form-help {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
   z-index: 1000;
+  overflow-y: auto;
 }
 
 .modal-content {
   width: min(760px, 100%);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 24px;
+  max-height: calc(100vh - 48px);
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  overflow-y: auto;
 }
 
 /* ===================== */

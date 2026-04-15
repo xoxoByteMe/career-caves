@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { createListing, updateListing, getListings, type Listing } from '../lib/api';
 
-const CATEGORY_OPTIONS = ['shoes', 'shirts', 'jacket', 'pants', 'accessory', 'other'] as const;
+const CATEGORY_OPTIONS = [
+  'Jacket / Blazer',
+  'Shirt / Top',
+  'Pants / Bottoms',
+  'Suits',
+  'Dresses',
+  'Shoes',
+  'Accessory',
+] as const;
+
+const CONDITION_OPTIONS = ['New', 'Like new', 'Good', 'Fair'] as const;
+const DESCRIPTION_MAX_LENGTH = 400;
 
 export default function LendingPage() {
   // ── Simulated Auth (temporary — no real login yet) ────────────────────────
@@ -18,6 +29,8 @@ export default function LendingPage() {
   const [title, setTitle] = useState('');
   const [pricePerDay, setPricePerDay] = useState('');
   const [category, setCategory] = useState('');
+  const [condition, setCondition] = useState('');
+  const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,6 +103,8 @@ export default function LendingPage() {
       setTitle('');
       setPricePerDay('');
       setCategory('');
+      setCondition('');
+      setDescription('');
       setImageFile(null);
       setFileInputKey((k) => k + 1);
       fetchMyListings(simulatedUserId);
@@ -243,6 +258,30 @@ export default function LendingPage() {
             )}
 
             <div className="form-grid">
+              <div className="form-group form-group--full">
+                <label className="form-label">Item Image</label>
+                <label
+                  className="upload-zone"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) setImageFile(file);
+                  }}
+                >
+                  <span className="upload-zone-icon">↑</span>
+                  <div>
+                    <strong>Drag &amp; drop or click to upload</strong>
+                    <p>{imageFile ? imageFile.name : 'JPEG, PNG, or GIF. Max size 10MB.'}</p>
+                  </div>
+                  <input
+                    key={fileInputKey}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </div>
               <div className="form-group">
                 <label className="form-label">Item Title</label>
                 <input
@@ -281,18 +320,40 @@ export default function LendingPage() {
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Status</label>
-                <input className="form-input" value="Ready to list" readOnly />
+                <label className="form-label">Condition</label>
+                <div className="condition-chips" role="group" aria-label="Condition options">
+                  {CONDITION_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`condition-chip ${condition === option ? 'condition-chip--active' : ''}`}
+                      onClick={() => setCondition(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="form-group form-group--full">
-                <label className="form-label">Item Image (optional)</label>
-                <input
-                  key={fileInputKey}
+                <label className="form-label" htmlFor="listing-description">
+                  Description
+                </label>
+                <textarea
+                  id="listing-description"
                   className="form-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  rows={5}
+                  placeholder="Add seller notes about brand, condition, fit, colour, flaws, and dry-cleaning."
+                  value={description}
+                  maxLength={DESCRIPTION_MAX_LENGTH}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
+                <p className="form-help">
+                  {description.length} / {DESCRIPTION_MAX_LENGTH}
+                </p>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <input className="form-input" value="Ready to list" readOnly />
               </div>
             </div>
 
