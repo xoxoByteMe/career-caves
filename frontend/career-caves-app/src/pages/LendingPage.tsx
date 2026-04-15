@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createListing, updateListing, getListings, type Listing } from '../lib/api';
 
-const CATEGORY_OPTIONS = [
-  'Jacket / Blazer',
-  'Shirt / Top',
-  'Pants / Bottoms',
-  'Suits',
-  'Dresses',
-  'Shoes',
-  'Accessory',
-] as const;
+const CATEGORY_OPTIONS = ['shoes', 'shirts', 'jacket', 'pants', 'accessory', 'other'] as const;
 
 const CONDITION_OPTIONS = ['New', 'Like new', 'Good', 'Fair'] as const;
 const DESCRIPTION_MAX_LENGTH = 400;
