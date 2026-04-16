@@ -7,6 +7,8 @@ export interface Listing {
   title: string;
   price_per_day: number;
   category?: string | null;
+  condition?: string | null;
+  size?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   image_url?: string | null;
@@ -49,6 +51,8 @@ export async function createListing(input: {
   title: string;
   pricePerDay: number;
   category?: string;
+  size?: string;
+  condition?: string;
   image?: File;
 }): Promise<Listing> {
   // Use multipart/form-data so we can send both text fields and an optional image file.
@@ -59,6 +63,14 @@ export async function createListing(input: {
 
   if (input.category) {
     formData.append('category', input.category);
+  }
+
+  if (input.size) {
+    formData.append('size', input.size);
+  }
+
+  if (input.condition) {
+    formData.append('condition', input.condition);
   }
 
   if (input.image) {
@@ -83,6 +95,8 @@ export async function updateListing(
     title: string;
     pricePerDay: number;
     category?: string;
+    size?: string;
+    condition?: string;
     image?: File;
   },
 ): Promise<Listing> {
@@ -93,6 +107,14 @@ export async function updateListing(
 
   if (input.category) {
     formData.append('category', input.category);
+  }
+
+  if (input.size) {
+    formData.append('size', input.size);
+  }
+
+  if (input.condition) {
+    formData.append('condition', input.condition);
   }
 
   if (input.image) {

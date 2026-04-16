@@ -89,11 +89,13 @@ listingsRouter.get('/', async (_req, res) => {
 });
 
 listingsRouter.post('/', upload.single('image'), async (req, res) => {
-  const { title, pricePerDay, category, user_id } = req.body as {
+  const { title, pricePerDay, category, user_id, size, condition } = req.body as {
     user_id?: string;
     title?: string;
     pricePerDay?: string;
     category?: string;
+    size?: string;
+    condition?: string;
   };
 
   const parsedUserId = Number(user_id);
@@ -130,6 +132,8 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
       price_per_day: parsedPricePerDay,
       category: category ?? null,
       user_id: parsedUserId,
+      size: size ?? null,
+      condition: condition ?? null,
     })
     .select('*')
     .single();
@@ -229,7 +233,9 @@ listingsRouter.patch('/:id', upload.single('image'), async (req, res) => {
     return res.status(400).json({ error: 'Invalid listing id' });
   }
 
-  const { title, pricePerDay, category, user_id } = req.body as {
+  const { title, pricePerDay, category, user_id, size, condition } = req.body as {
+      size?: string;
+      condition?: string;
     user_id?: string;
     title?: string;
     pricePerDay?: string;
@@ -278,6 +284,8 @@ listingsRouter.patch('/:id', upload.single('image'), async (req, res) => {
   const { data: updatedListing, error: updateError } = await supabaseAdmin
     .from('listings')
     .update({
+      size: size ?? null,
+      condition: condition ?? null,
       title,
       price_per_day: parsedPricePerDay,
       category: category ?? null,

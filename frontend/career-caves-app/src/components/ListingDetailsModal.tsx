@@ -52,6 +52,14 @@ export default function ListingDetailsModal({ listing, onClose }: ListingDetails
               <span className="listing-details-value">{listing.category ?? 'N/A'}</span>
             </div>
             <div className="listing-details-row">
+              <span className="listing-details-key">size</span>
+              <span className="listing-details-value">{listing.size ?? 'N/A'}</span>
+            </div>
+            <div className="listing-details-row">
+              <span className="listing-details-key">condition</span>
+              <span className="listing-details-value">{listing.condition ?? 'N/A'}</span>
+            </div>
+            <div className="listing-details-row">
               <span className="listing-details-key">created_at</span>
               <span className="listing-details-value">{formatDate(listing.created_at)}</span>
             </div>
