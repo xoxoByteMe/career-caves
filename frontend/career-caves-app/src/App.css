@@ -653,3 +653,102 @@
 .btn-edit:hover {
   background: var(--bg-secondary);
 }
+
+.btn-delete {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #f3b3b3;
+  background: #fff5f5;
+  color: #b42318;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background: #ffe5e5;
+}
+
+.listing-details-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 18px;
+}
+
+.listing-details-image,
+.listing-details-no-image {
+  width: 100%;
+  height: 220px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--bg-secondary);
+}
+
+.listing-details-no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.listing-details-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.listing-details-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 14px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.listing-details-key {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.listing-details-value {
+  color: var(--text-main);
+  font-size: 20px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.listing-details-modal h2 {
+  font-size: 30px;
+}
+
+.listing-details-modal .modal-subtitle {
+  font-size: 20;
+  margin-bottom: 20px;
+}
+
+.listing-details-url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+@media (max-width: 760px) {
+  .listing-details-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-details-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .listing-details-key,
+  .listing-details-value {
+    font-size: 14px;
+  }
+
+  .listing-details-image,
+  .listing-details-no-image {
+    height: 200px;
+  }
+}

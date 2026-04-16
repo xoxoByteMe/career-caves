@@ -33,10 +33,37 @@ listingsRouter.get('/', async (_req, res) => {
     return res.status(400).json({ error: error.message });
   }
 
+  const listingRows = (data ?? []) as Array<{ user_id?: number | null } & Record<string, unknown>>;
+  const uniqueUserIds = Array.from(
+    new Set(
+      listingRows
+        .map((listing) => listing.user_id)
+        .filter((userId): userId is number => typeof userId === 'number'),
+    ),
+  );
+
+  let ownersById = new Map<number, { name: string | null; email: string | null }>();
+
+  if (uniqueUserIds.length > 0) {
+    const { data: ownersData } = await supabaseAdmin
+      .from('users')
+      .select('user_id, name, email')
+      .in('user_id', uniqueUserIds);
+
+    ownersById = new Map(
+      ((ownersData ?? []) as Array<{ user_id: number; name: string | null; email: string | null }>).map((owner) => [
+        owner.user_id,
+        { name: owner.name, email: owner.email },
+      ]),
+    );
+  }
+
   // For each listing, check storage for an image
   const listings = await Promise.all(
-    (data ?? []).map(async (listing: Record<string, unknown>) => {
+    listingRows.map(async (listing: Record<string, unknown>) => {
       const listingId = listing.listing_id;
+      const listingUserId = typeof listing.user_id === 'number' ? listing.user_id : null;
+      const owner = listingUserId ? ownersById.get(listingUserId) : null;
       const { data: files } = await supabaseAdmin.storage
         .from(listingImagesBucket)
         .list(`listings/${listingId}`);
@@ -49,7 +76,12 @@ listingsRouter.get('/', async (_req, res) => {
         image_url = publicUrl;
       }
 
-      return { ...listing, image_url };
+      return {
+        ...listing,
+        name: owner?.name ?? null,
+        email: owner?.email ?? null,
+        image_url,
+      };
     }),
   );
 
@@ -329,6 +361,55 @@ listingsRouter.patch('/:id', upload.single('image'), async (req, res) => {
   }
 
   return res.json({ data: { ...updatedListing, image_url: imageUrl } });
+});
+
+listingsRouter.delete('/:id', async (req, res) => {
+  const listingId = Number(req.params.id);
+  if (Number.isNaN(listingId)) {
+    return res.status(400).json({ error: 'Invalid listing id' });
+  }
+
+  const { user_id } = req.body as { user_id?: number | string };
+  const parsedUserId = Number(user_id);
+  if (Number.isNaN(parsedUserId)) {
+    return res.status(400).json({ error: 'user_id is required and must be a number' });
+  }
+
+  const { data: existingListing, error: fetchError } = await supabaseAdmin
+    .from('listings')
+    .select('user_id')
+    .eq('listing_id', listingId)
+    .single();
+
+  if (fetchError || !existingListing) {
+    return res.status(404).json({ error: 'Listing not found' });
+  }
+
+  if ((existingListing as { user_id: number }).user_id !== parsedUserId) {
+    return res.status(403).json({ error: 'You do not own this listing' });
+  }
+
+  const { data: existingFiles } = await supabaseAdmin.storage
+    .from(listingImagesBucket)
+    .list(`listings/${listingId}`);
+
+  if (existingFiles && existingFiles.length > 0) {
+    const filesToDelete = existingFiles.map((f) => `listings/${listingId}/${f.name}`);
+    await supabaseAdmin.storage.from(listingImagesBucket).remove(filesToDelete);
+  }
+
+  await supabaseAdmin.from('listingimages').delete().eq('listing_id', listingId);
+
+  const { error: deleteError } = await supabaseAdmin
+    .from('listings')
+    .delete()
+    .eq('listing_id', listingId);
+
+  if (deleteError) {
+    return res.status(400).json({ error: deleteError.message });
+  }
+
+  return res.json({ data: { deleted: true } });
 });
 
 export default listingsRouter;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createListing, updateListing, getListings, type Listing } from '../lib/api';
+import { createListing, updateListing, getListings, deleteListing, type Listing } from '../lib/api';
 import CameraCapture from '../components/CameraCapture';
 import { useCameraCapture } from '../hooks/useCameraCapture';
 
@@ -41,6 +41,11 @@ export default function LendingPage() {
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [editFormMessage, setEditFormMessage] = useState<string | null>(null);
   const editCamera = useCameraCapture((message) => setEditFormMessage(`Camera error: ${message}`));
+
+  // ── Delete modal ──────────────────────────────────────────────────────────
+  const [listingToDelete, setListingToDelete] = useState<Listing | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
 
   function fetchMyListings(userId: number) {
     setLoadingListings(true);
@@ -195,6 +200,34 @@ export default function LendingPage() {
     }
   }
 
+  function openDeleteModal(listing: Listing) {
+    setListingToDelete(listing);
+    setDeleteMessage(null);
+  }
+
+  async function handleConfirmDelete() {
+    if (!listingToDelete) return;
+
+    const id = listingToDelete.listing_id ?? listingToDelete.id;
+    if (!id) {
+      setDeleteMessage('Cannot delete: listing has no id.');
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteMessage(null);
+
+    try {
+      await deleteListing(id, simulatedUserId);
+      setListingToDelete(null);
+      fetchMyListings(simulatedUserId);
+    } catch (error) {
+      setDeleteMessage(error instanceof Error ? error.message : 'Failed to delete listing.');
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="page-padding">
       <h2>Lending</h2>
@@ -254,6 +287,13 @@ export default function LendingPage() {
                   onClick={() => openEditModal(listing)}
                 >
                   Edit
+                </button>
+                <button
+                  className="btn-delete"
+                  type="button"
+                  onClick={() => openDeleteModal(listing)}
+                >
+                  Delete
                 </button>
               </div>
             </div>
@@ -504,6 +544,39 @@ export default function LendingPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      {listingToDelete && (
+        <div className="modal-overlay" onClick={() => setListingToDelete(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Delete Listing</h2>
+            <p className="modal-subtitle">
+              Are you sure you want to delete &ldquo;{listingToDelete.title}&rdquo;? This cannot be undone.
+            </p>
+
+            {deleteMessage && <p className="text-error">{deleteMessage}</p>}
+
+            <div className="form-actions">
+              <button
+                onClick={() => setListingToDelete(null)}
+                type="button"
+                className="btn-cancel"
+                disabled={isDeleting}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                className="btn-submit"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
