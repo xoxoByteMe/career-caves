@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Rental } from '../app/routes';
 import { getListings, type Listing } from '../lib/api';
+import ListingDetailsModal from '../components/ListingDetailsModal';
 
 interface DashboardPageProps {
   rentals: Rental[];
@@ -10,6 +11,7 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -88,7 +90,19 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
           )}
 
           {listings.map((listing) => (
-            <div key={listing.listing_id ?? listing.id ?? `${listing.title}-${listing.price_per_day}`} className="listing-card">
+            <div
+              key={listing.listing_id ?? listing.id ?? `${listing.title}-${listing.price_per_day}`}
+              className="listing-card"
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedListing(listing)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedListing(listing);
+                }
+              }}
+            >
               {listing.image_url ? (
                 <img
                   src={listing.image_url}
@@ -106,6 +120,11 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
           ))}
         </div>
       </div>
+
+      <ListingDetailsModal
+        listing={selectedListing}
+        onClose={() => setSelectedListing(null)}
+      />
 
       <div className="ticks"></div>
 

@@ -1,9 +1,16 @@
 export interface Listing {
   listing_id?: number;
   id?: number;
+  user_id?: number;
+  name?: string | null;
+  email?: string | null;
   title: string;
   price_per_day: number;
   category?: string | null;
+  condition?: string | null;
+  size?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   image_url?: string | null;
 }
 
@@ -44,6 +51,8 @@ export async function createListing(input: {
   title: string;
   pricePerDay: number;
   category?: string;
+  size?: string;
+  condition?: string;
   image?: File;
 }): Promise<Listing> {
   // Use multipart/form-data so we can send both text fields and an optional image file.
@@ -54,6 +63,14 @@ export async function createListing(input: {
 
   if (input.category) {
     formData.append('category', input.category);
+  }
+
+  if (input.size) {
+    formData.append('size', input.size);
+  }
+
+  if (input.condition) {
+    formData.append('condition', input.condition);
   }
 
   if (input.image) {
@@ -68,4 +85,59 @@ export async function createListing(input: {
 
   // parseJsonResponse throws on non-2xx and returns payload.data on success.
   return parseJsonResponse<Listing>(response);
+}
+
+// listingsRouter.patch('/:id', ...)
+export async function updateListing(
+  listingId: number,
+  input: {
+    user_id: number;
+    title: string;
+    pricePerDay: number;
+    category?: string;
+    size?: string;
+    condition?: string;
+    image?: File;
+  },
+): Promise<Listing> {
+  const formData = new FormData();
+  formData.append('user_id', String(input.user_id));
+  formData.append('title', input.title);
+  formData.append('pricePerDay', String(input.pricePerDay));
+
+  if (input.category) {
+    formData.append('category', input.category);
+  }
+
+  if (input.size) {
+    formData.append('size', input.size);
+  }
+
+  if (input.condition) {
+    formData.append('condition', input.condition);
+  }
+
+  if (input.image) {
+    formData.append('image', input.image);
+  }
+
+  const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}`, {
+    method: 'PATCH',
+    body: formData,
+  });
+
+  return parseJsonResponse<Listing>(response);
+}
+
+// listingsRouter.delete('/:id', ...)
+export async function deleteListing(listingId: number, userId: number): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  await parseJsonResponse<{ deleted: boolean }>(response);
 }
