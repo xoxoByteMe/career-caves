@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createListing, updateListing, getListings, type Listing } from '../lib/api';
+import CameraCapture from '../components/CameraCapture';
+import { useCameraCapture } from '../hooks/useCameraCapture';
 
 const CATEGORY_OPTIONS = ['shoes', 'shirts', 'jacket', 'pants', 'accessory', 'other'] as const;
 
@@ -27,6 +29,7 @@ export default function LendingPage() {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
+  const createCamera = useCameraCapture((message) => setFormMessage(`Camera error: ${message}`));
 
   // ── Edit modal ────────────────────────────────────────────────────────────
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
@@ -37,6 +40,7 @@ export default function LendingPage() {
   const [editFileInputKey, setEditFileInputKey] = useState(0);
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [editFormMessage, setEditFormMessage] = useState<string | null>(null);
+  const editCamera = useCameraCapture((message) => setEditFormMessage(`Camera error: ${message}`));
 
   function fetchMyListings(userId: number) {
     setLoadingListings(true);
@@ -53,10 +57,37 @@ export default function LendingPage() {
     fetchMyListings(simulatedUserId);
   }, [simulatedUserId]);
 
+  // Clean up camera streams when modals close
+  useEffect(() => {
+    if (!showListForm) {
+      createCamera.stopCamera();
+    }
+  }, [showListForm, createCamera]);
+
+  useEffect(() => {
+    if (editingListing === null) {
+      editCamera.stopCamera();
+    }
+  }, [editingListing, editCamera]);
+
   function applyUserId() {
     const parsed = Number(userIdInput);
     if (!Number.isNaN(parsed) && parsed > 0) {
       setSimulatedUserId(parsed);
+    }
+  }
+
+  async function handleCreateCapture() {
+    const capturedFile = await createCamera.capturePhoto();
+    if (capturedFile) {
+      setImageFile(capturedFile);
+    }
+  }
+
+  async function handleEditCapture() {
+    const capturedFile = await editCamera.capturePhoto();
+    if (capturedFile) {
+      setEditImageFile(capturedFile);
     }
   }
 
@@ -252,27 +283,38 @@ export default function LendingPage() {
             <div className="form-grid">
               <div className="form-group form-group--full">
                 <label className="form-label">Item Image</label>
-                <label
-                  className="upload-zone"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files?.[0];
-                    if (file) setImageFile(file);
-                  }}
-                >
-                  <span className="upload-zone-icon">↑</span>
-                  <div>
-                    <strong>Drag &amp; drop or click to upload</strong>
-                    <p>{imageFile ? imageFile.name : 'JPEG, PNG, or GIF. Max size 10MB.'}</p>
-                  </div>
-                  <input
-                    key={fileInputKey}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-                  />
-                </label>
+                {!createCamera.isCameraOpen && (
+                  <>
+                    <label
+                      className="upload-zone"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) setImageFile(file);
+                      }}
+                    >
+                      <span className="upload-zone-icon">↑</span>
+                      <div>
+                        <strong>Drag &amp; drop or click to upload</strong>
+                        <p>{imageFile ? imageFile.name : 'JPEG, PNG, or GIF. Max size 10MB.'}</p>
+                      </div>
+                      <input
+                        key={fileInputKey}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                  </>
+                )}
+                <CameraCapture
+                  isCameraOpen={createCamera.isCameraOpen}
+                  videoRef={createCamera.videoRef}
+                  onStartCamera={createCamera.startCamera}
+                  onCapturePhoto={handleCreateCapture}
+                  onCancelCamera={createCamera.stopCamera}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Item Title</label>
@@ -428,12 +470,23 @@ export default function LendingPage() {
               </div>
               <div className="form-group form-group--full">
                 <label className="form-label">Replace Image (optional)</label>
-                <input
-                  key={editFileInputKey}
-                  className="form-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setEditImageFile(e.target.files?.[0] ?? null)}
+                {!editCamera.isCameraOpen && (
+                  <>
+                    <input
+                      key={editFileInputKey}
+                      className="form-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setEditImageFile(e.target.files?.[0] ?? null)}
+                    />
+                  </>
+                )}
+                <CameraCapture
+                  isCameraOpen={editCamera.isCameraOpen}
+                  videoRef={editCamera.videoRef}
+                  onStartCamera={editCamera.startCamera}
+                  onCapturePhoto={handleEditCapture}
+                  onCancelCamera={editCamera.stopCamera}
                 />
               </div>
             </div>
