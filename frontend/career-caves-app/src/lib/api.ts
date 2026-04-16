@@ -2,9 +2,13 @@ export interface Listing {
   listing_id?: number;
   id?: number;
   user_id?: number;
+  name?: string | null;
+  email?: string | null;
   title: string;
   price_per_day: number;
   category?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   image_url?: string | null;
 }
 
@@ -101,4 +105,17 @@ export async function updateListing(
   });
 
   return parseJsonResponse<Listing>(response);
+}
+
+// listingsRouter.delete('/:id', ...)
+export async function deleteListing(listingId: number, userId: number): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  await parseJsonResponse<{ deleted: boolean }>(response);
 }
