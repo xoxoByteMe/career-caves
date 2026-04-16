@@ -443,6 +443,74 @@
 /*  Discover             */
 /* ===================== */
 
+.filters-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 150px;
+}
+
+.filter-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-select,
+.filter-input {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background-color: #fff;
+  color: var(--text-primary, #333);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-select:hover,
+.filter-input:hover {
+  border-color: var(--ufl-blue, #0033a0);
+}
+
+.filter-select:focus,
+.filter-input:focus {
+  outline: none;
+  border-color: var(--ufl-blue, #0033a0);
+  box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.1);
+}
+
+.btn-clear-filters {
+  padding: 10px 16px;
+  background-color: var(--text-muted, #999);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-clear-filters:hover {
+  background-color: var(--text-dark, #666);
+}
+
 .discover-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

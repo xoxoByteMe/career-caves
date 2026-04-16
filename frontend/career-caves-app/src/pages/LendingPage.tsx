@@ -6,6 +6,7 @@ import { useCameraCapture } from '../hooks/useCameraCapture';
 const CATEGORY_OPTIONS = ['shoes', 'shirts', 'jacket', 'pants', 'accessory', 'other'] as const;
 
 const CONDITION_OPTIONS = ['New', 'Like new', 'Good', 'Fair'] as const;
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', 'One Size', 'N/A'] as const;
 const DESCRIPTION_MAX_LENGTH = 400;
 
 export default function LendingPage() {
@@ -23,6 +24,7 @@ export default function LendingPage() {
   const [title, setTitle] = useState('');
   const [pricePerDay, setPricePerDay] = useState('');
   const [category, setCategory] = useState('');
+  const [size, setSize] = useState('');
   const [condition, setCondition] = useState('');
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -36,6 +38,8 @@ export default function LendingPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editPricePerDay, setEditPricePerDay] = useState('');
   const [editCategory, setEditCategory] = useState('');
+  const [editSize, setEditSize] = useState('');
+  const [editCondition, setEditCondition] = useState('');
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editFileInputKey, setEditFileInputKey] = useState(0);
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
@@ -124,6 +128,8 @@ export default function LendingPage() {
         title: title.trim(),
         pricePerDay: parsedPrice,
         category,
+        size,
+        condition,
         image: imageFile ?? undefined,
       });
 
@@ -131,6 +137,7 @@ export default function LendingPage() {
       setTitle('');
       setPricePerDay('');
       setCategory('');
+      setSize('');
       setCondition('');
       setDescription('');
       setImageFile(null);
@@ -151,6 +158,8 @@ export default function LendingPage() {
     setEditImageFile(null);
     setEditFileInputKey((k) => k + 1);
     setEditFormMessage(null);
+    setEditSize(listing.size ?? '');
+    setEditCondition(listing.condition ?? '');
   }
 
   async function handleEditSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -188,6 +197,8 @@ export default function LendingPage() {
         title: editTitle.trim(),
         pricePerDay: parsedPrice,
         category: editCategory,
+          size: editSize,
+          condition: editCondition,
         image: editImageFile ?? undefined,
       });
 
@@ -394,6 +405,21 @@ export default function LendingPage() {
                 </select>
               </div>
               <div className="form-group">
+                <label className="form-label">Size</label>
+                <select
+                  className="form-input"
+                  value={size}
+                  onChange={(e) => setSize(e.target.value)}
+                >
+                  <option value="">Select a size</option>
+                  {SIZE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
                 <label className="form-label">Condition</label>
                 <div className="condition-chips" role="group" aria-label="Condition options">
                   {CONDITION_OPTIONS.map((option) => (
@@ -490,7 +516,7 @@ export default function LendingPage() {
                   onChange={(e) => setEditPricePerDay(e.target.value)}
                 />
               </div>
-              <div className="form-group form-group--full">
+              <div className="form-group">
                 <label className="form-label">Category</label>
                 <select
                   className="form-input"
@@ -507,6 +533,36 @@ export default function LendingPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Size</label>
+                <select
+                  className="form-input"
+                  value={editSize}
+                  onChange={(e) => setEditSize(e.target.value)}
+                >
+                  <option value="">Select a size</option>
+                  {SIZE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Condition</label>
+                <div className="condition-chips" role="group" aria-label="Condition options">
+                  {CONDITION_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`condition-chip ${editCondition === option ? 'condition-chip--active' : ''}`}
+                      onClick={() => setEditCondition(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="form-group form-group--full">
                 <label className="form-label">Replace Image (optional)</label>
