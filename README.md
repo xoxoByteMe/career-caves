@@ -99,60 +99,11 @@ Backend `.env` values:
 ### Database Migrations
 Store migration files in `backend/supabase/migrations` and run all Supabase migration commands from the `backend` folder.
 
-Create a new migration file:
-
-1. Open your Supabase project dashboard.
-2. Go to SQL Editor and apply your schema changes there (or paste SQL from your migration).
-3. Create a local migration file:
-
-```bash
-cd backend
-npx supabase migration new <descriptive_name>
-```
-
-4. Paste the exact SQL that was applied in the dashboard into that migration file.
-5. Commit the migration file so teammates can replay the same change history.
-
-
-Notes:
-- Use `npx supabase ...` if `supabase ...` is not recognized in PowerShell.
-- `db pull` and `db dump` require local container tooling in many Supabase CLI flows because the CLI creates a shadow/local Postgres environment to diff and generate schema output.
-- The safest workflow is: create a migration, write the SQL deliberately, run `db push`, then commit the migration file.
 
 ### Starter API Routes
 - `GET /api/health`
 - `GET /api/listings`
 - `POST /api/listings` (requires `Authorization: Bearer <token>`)
-
-## Deployment
-
-### Frontend - Vercel (recommended) or Netlify
-1. Connect your GitHub repo.
-2. Set root directory to `frontend/career-caves-app`.
-3. Build command: `npm run build`.
-4. Output directory: `dist`.
-5. Add environment variables:
-	 - `VITE_SUPABASE_URL`
-	 - `VITE_SUPABASE_ANON_KEY`
-
-### Frontend - Azure Static Web Apps
-1. Create a Static Web App in Azure.
-2. Set app location to `frontend/career-caves-app`.
-3. Build command: `npm run build`.
-4. Output location: `dist`.
-5. Add env vars in Configuration -> Application settings.
-6. Add `staticwebapp.config.json` in `frontend/career-caves-app/public/` with:
-	 `{ "navigationFallback": { "rewrite": "/index.html" } }`
-
-### Backend - Azure App Service / Render / Railway / Fly.io
-1. Deploy from the `backend` folder as a Node service.
-2. Build command: `npm run build`.
-3. Start command: `npm start`.
-4. Add environment variables:
-	 - `PORT`
-	 - `CORS_ORIGIN`
-	 - `SUPABASE_URL`
-	 - `SUPABASE_SERVICE_ROLE_KEY` (equivalent to secret key in settings-> api keys. It is not the publishable key)
 
 ## Package Versions
 - Node.js 22.12+ (recommend using NVM to manage Node versions)
