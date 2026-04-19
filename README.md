@@ -74,7 +74,15 @@ npm install
 npm run dev
 ```
 
-### Supabase CLI From Backend
+Backend `.env` values:
+- `PORT=4000`
+- `CORS_ORIGIN=http://localhost:5173`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only secret)
+- `SUPABASE_LISTING_IMAGES_BUCKET=caves-images`
+
+
+### Supabase CLI From Backend (this is optional only for dev if want to interact with supabase directly)
 If the `supabase` command is not installed globally on your machine, run it with `npx` from the `backend` folder:
 
 ```bash
@@ -88,13 +96,6 @@ After logging in, link this backend to your Supabase project:
 cd backend
 npx supabase link --project-ref <your-project-ref>
 ```
-
-Backend `.env` values:
-- `PORT=4000`
-- `CORS_ORIGIN=http://localhost:5173`
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY` (server-only secret)
-- `SUPABASE_LISTING_IMAGES_BUCKET=caves-images`
 
 ### Database Migrations
 Store migration files in `backend/supabase/migrations` and run all Supabase migration commands from the `backend` folder.
