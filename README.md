@@ -94,7 +94,7 @@ After logging in, link this backend to your Supabase project:
 
 ```bash
 cd backend
-npx supabase link --project-ref <your-project-ref>
+npx supabase link --project-ref <supabaseProjectID>
 ```
 
 ### Database Migrations
