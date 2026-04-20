@@ -1,4 +1,5 @@
-import type { Listing } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { getOrCreateConversation, type Listing } from '../lib/api';
 
 type ListingDetailsModalProps = {
   listing: Listing | null;
@@ -13,8 +14,45 @@ function formatDate(value?: string | null): string {
 }
 
 export default function ListingDetailsModal({ listing, onClose }: ListingDetailsModalProps) {
+  const navigate = useNavigate();
   if (!listing) {
     return null;
+  }
+
+    async function handleMessageOwner() {
+    const listingId = listing.listing_id ?? listing.id;
+    const ownerUserId = listing.user_id;
+    const currentUserId = 1;
+
+    if (!listingId || !ownerUserId) {
+      alert('Missing listing or owner information.');
+      return;
+    }
+
+    if (ownerUserId === currentUserId) {
+      alert('You cannot message your own listing.');
+      return;
+    }
+
+    try {
+      const conversation = await getOrCreateConversation({
+        listing_id: listingId,
+        current_user_id: currentUserId,
+        other_user_id: ownerUserId,
+      });
+
+      onClose();
+
+      navigate('/messages', {
+        state: {
+          conversationId: conversation.conversation_id,
+          currentUserId,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : 'Failed to open conversation.');
+    }
   }
 
   return (
@@ -79,8 +117,11 @@ export default function ListingDetailsModal({ listing, onClose }: ListingDetails
         </div>
 
         <div className="form-actions">
-          <button type="button" className="btn-submit" onClick={onClose}>
+          <button type="button" className="btn-cancel" onClick={onClose}>
             Close
+          </button>
+          <button type="button" className="btn-submit" onClick={() => void handleMessageOwner()}>
+            Message Owner
           </button>
         </div>
       </div>
