@@ -14,6 +14,22 @@ export interface Listing {
   image_url?: string | null;
 }
 
+export interface Conversation {
+  conversation_id: number;
+  listing_id: number;
+  user1_id: number;
+  user2_id: number;
+  created_at?: string | null;
+}
+
+export interface Message {
+  message_id: number;
+  conversation_id: number;
+  sender_id: number;
+  body: string;
+  created_at: string;
+}
+
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').trim();
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {
@@ -140,4 +156,41 @@ export async function deleteListing(listingId: number, userId: number): Promise<
   });
 
   await parseJsonResponse<{ deleted: boolean }>(response);
+}
+
+export async function getOrCreateConversation(input: {
+  listing_id: number;
+  current_user_id: number;
+  other_user_id: number;
+}): Promise<Conversation> {
+  const response = await fetch(`${apiBaseUrl}/api/conversations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  return parseJsonResponse<Conversation>(response);
+}
+
+export async function getMessages(conversationId: number): Promise<Message[]> {
+  const response = await fetch(`${apiBaseUrl}/api/messages/${conversationId}`);
+  return parseJsonResponse<Message[]>(response);
+}
+
+export async function sendMessage(input: {
+  conversation_id: number;
+  sender_id: number;
+  body: string;
+}): Promise<Message> {
+  const response = await fetch(`${apiBaseUrl}/api/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  return parseJsonResponse<Message>(response);
 }
