@@ -36,11 +36,25 @@ async function rollbackListingCreation(listingId: number) {
   await supabaseAdmin.from('listings').delete().eq('listing_id', listingId);
 }
 
-listingsRouter.get('/', requireAuth, async (_req, res) => {
-  const { data, error } = await supabaseAdmin
+listingsRouter.get('/', requireAuth, async (req, res) => {
+  const mineOnly = req.query.mine === 'true';
+  let listingsQuery = supabaseAdmin
     .from('listings')
     .select('*')
     .order('created_at', { ascending: false });
+
+  if (mineOnly) {
+    const supabaseUser = res.locals.user as { id: string };
+    const parsedUserId = await getNumericUserId(supabaseUser.id);
+
+    if (!parsedUserId) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    listingsQuery = listingsQuery.eq('user_id', parsedUserId);
+  }
+
+  const { data, error } = await listingsQuery;
 
   if (error) {
     return res.status(400).json({ error: error.message });

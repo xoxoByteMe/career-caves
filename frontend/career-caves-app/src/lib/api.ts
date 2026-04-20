@@ -63,9 +63,16 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 }
 
 // listingsRouter.get('/', async (_req, res) => {
-export async function getListings(): Promise<Listing[]> {
+export async function getListings(options?: { mine?: boolean }): Promise<Listing[]> {
   const authHeaders = await getAuthHeaders();
-  const response = await fetch(`${apiBaseUrl}/api/listings`, {
+  const searchParams = new URLSearchParams();
+
+  if (options?.mine) {
+    searchParams.set('mine', 'true');
+  }
+
+  const queryString = searchParams.toString();
+  const response = await fetch(`${apiBaseUrl}/api/listings${queryString ? `?${queryString}` : ''}`, {
     headers: authHeaders,
   });
   return parseJsonResponse<Listing[]>(response);
@@ -171,12 +178,13 @@ export async function deleteListing(listingId: number): Promise<void> {
 
 export async function getOrCreateConversation(input: {
   listing_id: number;
-  current_user_id: number;
   other_user_id: number;
 }): Promise<Conversation> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${apiBaseUrl}/api/conversations`, {
     method: 'POST',
     headers: {
+      ...authHeaders,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(input),

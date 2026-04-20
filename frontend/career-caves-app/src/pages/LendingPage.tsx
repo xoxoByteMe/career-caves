@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createListing, updateListing, getListings, deleteListing, type Listing } from '../lib/api';
 import CameraCapture from '../components/CameraCapture';
 import { useCameraCapture } from '../hooks/useCameraCapture';
+import { useAuth } from '../contexts/AuthContext';
 
 const CATEGORY_OPTIONS = ['shoes', 'shirts', 'jacket', 'pants', 'accessory', 'other'] as const;
 
@@ -10,9 +11,7 @@ const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '4', '5', '6', '7', '8',
 const DESCRIPTION_MAX_LENGTH = 400;
 
 export default function LendingPage() {
-  // ── Simulated Auth (temporary — no real login yet) ────────────────────────
-  const [simulatedUserId, setSimulatedUserId] = useState(1);
-  const [userIdInput, setUserIdInput] = useState('1');
+  const { user } = useAuth();
 
   // ── My Listings ───────────────────────────────────────────────────────────
   const [myListings, setMyListings] = useState<Listing[]>([]);
@@ -51,11 +50,11 @@ export default function LendingPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
 
-  function fetchMyListings(userId: number) {
+  function fetchMyListings() {
     setLoadingListings(true);
     setListingsError(null);
-    getListings()
-      .then((all) => setMyListings(all.filter((l) => l.user_id === userId)))
+    getListings({ mine: true })
+      .then(setMyListings)
       .catch((err) =>
         setListingsError(err instanceof Error ? err.message : 'Failed to load listings'),
       )
@@ -63,8 +62,10 @@ export default function LendingPage() {
   }
 
   useEffect(() => {
-    fetchMyListings(simulatedUserId);
-  }, [simulatedUserId]);
+    if (user) {
+      fetchMyListings();
+    }
+  }, [user]);
 
   // Clean up camera streams when modals close
   useEffect(() => {
@@ -78,13 +79,6 @@ export default function LendingPage() {
       editCamera.stopCamera();
     }
   }, [editingListing, editCamera]);
-
-  function applyUserId() {
-    const parsed = Number(userIdInput);
-    if (!Number.isNaN(parsed) && parsed > 0) {
-      setSimulatedUserId(parsed);
-    }
-  }
 
   async function handleCreateCapture() {
     const capturedFile = await createCamera.capturePhoto();
@@ -124,7 +118,6 @@ export default function LendingPage() {
 
     try {
       await createListing({
-        user_id: simulatedUserId,
         title: title.trim(),
         pricePerDay: parsedPrice,
         category,
@@ -142,7 +135,7 @@ export default function LendingPage() {
       setDescription('');
       setImageFile(null);
       setFileInputKey((k) => k + 1);
-      fetchMyListings(simulatedUserId);
+      fetchMyListings();
     } catch (error) {
       setFormMessage(error instanceof Error ? error.message : 'Failed to create listing.');
     } finally {
@@ -193,17 +186,16 @@ export default function LendingPage() {
 
     try {
       await updateListing(id, {
-        user_id: simulatedUserId,
         title: editTitle.trim(),
         pricePerDay: parsedPrice,
         category: editCategory,
-          size: editSize,
-          condition: editCondition,
+        size: editSize,
+        condition: editCondition,
         image: editImageFile ?? undefined,
       });
 
       setEditFormMessage('Listing updated successfully.');
-      fetchMyListings(simulatedUserId);
+      fetchMyListings();
     } catch (error) {
       setEditFormMessage(error instanceof Error ? error.message : 'Failed to update listing.');
     } finally {
@@ -229,9 +221,9 @@ export default function LendingPage() {
     setDeleteMessage(null);
 
     try {
-      await deleteListing(id, simulatedUserId);
+      await deleteListing(id);
       setListingToDelete(null);
-      fetchMyListings(simulatedUserId);
+      fetchMyListings();
     } catch (error) {
       setDeleteMessage(error instanceof Error ? error.message : 'Failed to delete listing.');
     } finally {
@@ -245,22 +237,6 @@ export default function LendingPage() {
       <p className="section-subtitle">
         List professional items and manage your active lending listings.
       </p>
-
-      {/* ── Simulated user selector (temporary — replace with real auth) ── */}
-      <div className="simulated-auth-bar">
-        <span className="simulated-auth-label">Temp — acting as User ID:</span>
-        <input
-          className="simulated-auth-input"
-          type="number"
-          min={1}
-          value={userIdInput}
-          onChange={(e) => setUserIdInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && applyUserId()}
-        />
-        <button className="btn-primary" type="button" onClick={applyUserId}>
-          Apply
-        </button>
-      </div>
 
       {/* ── Your Listings ── */}
       <div className="lending-section-header">

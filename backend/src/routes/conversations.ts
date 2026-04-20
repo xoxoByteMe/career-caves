@@ -1,22 +1,40 @@
 import { Router } from "express";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { requireAuth } from "../middleware/requireAuth";
 
 const conversationsRouter = Router();
 
-conversationsRouter.post("/", async (req, res) => {
+async function getNumericUserId(supabaseUuid: string): Promise<number | null> {
+  const { data, error } = await supabaseAdmin
+    .from("users")
+    .select("user_id")
+    .eq("supabase_uid", supabaseUuid)
+    .single();
+
+  if (error || !data) return null;
+  return (data as { user_id: number }).user_id;
+}
+
+conversationsRouter.post("/", requireAuth, async (req, res) => {
   try {
-    const { listing_id, current_user_id, other_user_id } = req.body as {
+    const { listing_id, other_user_id } = req.body as {
       listing_id?: number;
-      current_user_id?: number;
       other_user_id?: number;
     };
 
-    if (!listing_id || !current_user_id || !other_user_id) {
-      return res.status(400).json({ error: "listing_id, current_user_id, and other_user_id are required" });
+    const supabaseUser = res.locals.user as { id: string };
+    const currentUserId = await getNumericUserId(supabaseUser.id);
+
+    if (!listing_id || !other_user_id) {
+      return res.status(400).json({ error: "listing_id and other_user_id are required" });
     }
 
-    const user1_id = Math.min(current_user_id, other_user_id);
-    const user2_id = Math.max(current_user_id, other_user_id);
+    if (!currentUserId) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    const user1_id = Math.min(currentUserId, other_user_id);
+    const user2_id = Math.max(currentUserId, other_user_id);
 
     const { data: existing, error: findError } = await supabaseAdmin
       .from("conversations")
