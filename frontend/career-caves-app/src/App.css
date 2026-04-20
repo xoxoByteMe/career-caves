@@ -1068,3 +1068,138 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* ===================== */
+/*  Auth Pages           */
+/* ===================== */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+}
+
+.auth-card h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--text-main);
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 32px 0;
+}
+
+.auth-card .form-group {
+  margin-bottom: 16px;
+}
+
+.auth-card .form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-main);
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-card input:focus {
+  outline: none;
+  border-color: var(--ufl-blue);
+  box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.1);
+}
+
+.auth-error {
+  font-size: 13px;
+  color: #b42318;
+  background: #fff5f5;
+  border: 1px solid #f3b3b3;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.auth-card button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background: var(--ufl-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+
+.auth-card button[type="submit"]:hover {
+  opacity: 0.9;
+}
+
+.auth-card button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-card > p {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 20px 0 0 0;
+}
+
+.auth-card > p a {
+  color: var(--ufl-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-card > p a:hover {
+  text-decoration: underline;
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-logo h2 {
+  font-size: 18px;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.auth-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 24px 0;
+}

@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient';
+
 export interface Listing {
   listing_id?: number;
   id?: number;
@@ -32,6 +34,12 @@ export interface Message {
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').trim();
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Not Authenticated');
+  return { Authorization: `Bearer ${session.access_token}` };
+}
+
 async function parseJsonResponse<T>(response: Response): Promise<T> {
   const rawBody = await response.text();
   let payload: { data?: T; error?: string };
@@ -56,14 +64,16 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 
 // listingsRouter.get('/', async (_req, res) => {
 export async function getListings(): Promise<Listing[]> {
-  const response = await fetch(`${apiBaseUrl}/api/listings`);
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(`${apiBaseUrl}/api/listings`, {
+    headers: authHeaders,
+  });
   return parseJsonResponse<Listing[]>(response);
 }
 
 // listingsRouter.post('/', async (req, res) => {
 // user_id is set to 1 for now since we don't have login set up, but we'll want to include it in the future when we do
 export async function createListing(input: {
-  user_id: number;
   title: string;
   pricePerDay: number;
   category?: string;
@@ -71,9 +81,9 @@ export async function createListing(input: {
   condition?: string;
   image?: File;
 }): Promise<Listing> {
+  const authHeaders = await getAuthHeaders();
   // Use multipart/form-data so we can send both text fields and an optional image file.
   const formData = new FormData();
-  formData.append('user_id', String(input.user_id));
   formData.append('title', input.title);
   formData.append('pricePerDay', String(input.pricePerDay));
 
@@ -96,6 +106,7 @@ export async function createListing(input: {
   // The backend creates the listing, uploads the image (if provided), and returns the created row.
   const response = await fetch(`${apiBaseUrl}/api/listings`, {
     method: 'POST',
+    headers: authHeaders,
     body: formData,
   });
 
@@ -107,7 +118,6 @@ export async function createListing(input: {
 export async function updateListing(
   listingId: number,
   input: {
-    user_id: number;
     title: string;
     pricePerDay: number;
     category?: string;
@@ -116,8 +126,8 @@ export async function updateListing(
     image?: File;
   },
 ): Promise<Listing> {
+  const authHeaders = await getAuthHeaders();
   const formData = new FormData();
-  formData.append('user_id', String(input.user_id));
   formData.append('title', input.title);
   formData.append('pricePerDay', String(input.pricePerDay));
 
@@ -139,6 +149,7 @@ export async function updateListing(
 
   const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}`, {
     method: 'PATCH',
+    headers: authHeaders,
     body: formData,
   });
 
@@ -146,13 +157,13 @@ export async function updateListing(
 }
 
 // listingsRouter.delete('/:id', ...)
-export async function deleteListing(listingId: number, userId: number): Promise<void> {
+export async function deleteListing(listingId: number): Promise<void> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}`, {
     method: 'DELETE',
     headers: {
-      'Content-Type': 'application/json',
+      ...authHeaders, 'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ user_id: userId }),
   });
 
   await parseJsonResponse<{ deleted: boolean }>(response);
