@@ -20,7 +20,7 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      navigate('/dashboard');
+      navigate('/');
     }
     setLoading(false);
   };
@@ -28,7 +28,12 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <div className="auth-logo">
+            <h2>Career Caves</h2>
+            <div className="verified-badge">UF Verified</div>
+        </div>  
         <h1>Sign In</h1>
+        <p className="auth-subtitle">Welcome back — sign in to your account</p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email</label>

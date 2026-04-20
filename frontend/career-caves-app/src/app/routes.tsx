@@ -24,13 +24,13 @@ export default function AppRoutes({ rentals }: AppRoutesProps) {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      
-      <Route path="/" element={<DashboardPage rentals={rentals} />} />
-      <Route path="/discover" element={<DiscoverPage />} />
-      <Route path="/lending" element={<LendingPage />} />
-      <Route path="/messages" element={<MessagesPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+
+      <Route path="/" element={<ProtectedRoute><DashboardPage rentals={rentals} /></ProtectedRoute>} />
+      <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
+      <Route path="/lending" element={<ProtectedRoute><LendingPage /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

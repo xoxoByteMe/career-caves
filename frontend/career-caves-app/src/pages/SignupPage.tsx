@@ -45,7 +45,12 @@ export default function SignupPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <div className="auth-logo">
+            <h2>Career Caves</h2>
+            <div className="verified-badge">UF Verified</div>
+        </div>
         <h1>Create Account</h1>
+        <p className="auth-subtitle">Join Career Caves and start renting today</p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="name">Full Name</label>
