@@ -19,27 +19,32 @@ export default function ListingDetailsModal({ listing, onClose }: ListingDetails
     return null;
   }
 
-    async function handleMessageOwner() {
-    const listingId = listing.listing_id ?? listing.id;
-    const ownerUserId = listing.user_id;
-    const currentUserId = 1;
+  const listingSnapshot = listing;
+
+  async function handleMessageOwner() {
+    const listingId = listingSnapshot.listing_id ?? listingSnapshot.id;
+    const ownerUserId = listingSnapshot.user_id;
 
     if (!listingId || !ownerUserId) {
       alert('Missing listing or owner information.');
       return;
     }
 
-    if (ownerUserId === currentUserId) {
-      alert('You cannot message your own listing.');
-      return;
-    }
-
     try {
       const conversation = await getOrCreateConversation({
         listing_id: listingId,
-        current_user_id: currentUserId,
         other_user_id: ownerUserId,
       });
+
+      const currentUserId =
+        conversation.user1_id === ownerUserId
+          ? conversation.user2_id
+          : conversation.user1_id;
+
+      if (ownerUserId === currentUserId) {
+        alert('You cannot message your own listing.');
+        return;
+      }
 
       onClose();
 
