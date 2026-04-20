@@ -3,6 +3,7 @@ import multer from 'multer';
 import { randomUUID } from 'node:crypto';
 import { env } from '../lib/env';
 import { supabaseAdmin } from '../lib/supabaseAdmin';
+import { requireAuth } from '../middleware/requireAuth';
 
 const listingsRouter = Router();
 const listingImagesBucket = env.supabaseListingImagesBucket;
@@ -19,11 +20,23 @@ const upload = multer({
   },
 });
 
+// Helper to get numeric user_id from supabase auth uuid
+async function getNumericUserId(supabaseUuid: string): Promise<number | null> {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('user_id')
+    .eq('supabase_uid', supabaseUuid)
+    .single();
+  if (error || !data) return null;
+  return (data as { user_id: number }).user_id;
+}
+
+
 async function rollbackListingCreation(listingId: number) {
   await supabaseAdmin.from('listings').delete().eq('listing_id', listingId);
 }
 
-listingsRouter.get('/', async (_req, res) => {
+listingsRouter.get('/', requireAuth, async (_req, res) => {
   const { data, error } = await supabaseAdmin
     .from('listings')
     .select('*')
@@ -88,9 +101,8 @@ listingsRouter.get('/', async (_req, res) => {
   return res.json({ data: listings });
 });
 
-listingsRouter.post('/', upload.single('image'), async (req, res) => {
-  const { title, pricePerDay, category, user_id, size, condition } = req.body as {
-    user_id?: string;
+listingsRouter.post('/', requireAuth, upload.single('image'), async (req, res) => {
+  const { title, pricePerDay, category, size, condition } = req.body as {
     title?: string;
     pricePerDay?: string;
     category?: string;
@@ -98,8 +110,13 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
     condition?: string;
   };
 
-  const parsedUserId = Number(user_id);
+  const supabaseUser = res.locals.user as {id: string};
+  const parsedUserId = await getNumericUserId(supabaseUser.id);
   const parsedPricePerDay = Number(pricePerDay);
+
+  if (!parsedUserId) {
+    return res.status(401).json({ error: 'User not found' });
+  }
 
   if (!title || Number.isNaN(parsedPricePerDay)) {
     return res.status(400).json({ error: 'title and pricePerDay are required' });
@@ -227,23 +244,27 @@ listingsRouter.post('/', upload.single('image'), async (req, res) => {
   return res.status(201).json({ data: { ...listingData, image_url: imageUrl } });
 });
 
-listingsRouter.patch('/:id', upload.single('image'), async (req, res) => {
+listingsRouter.patch('/:id', requireAuth, upload.single('image'), async (req, res) => {
   const listingId = Number(req.params.id);
   if (Number.isNaN(listingId)) {
     return res.status(400).json({ error: 'Invalid listing id' });
   }
 
-  const { title, pricePerDay, category, user_id, size, condition } = req.body as {
+  const { title, pricePerDay, category, size, condition } = req.body as {
       size?: string;
       condition?: string;
-    user_id?: string;
     title?: string;
     pricePerDay?: string;
     category?: string;
   };
 
-  const parsedUserId = Number(user_id);
+  const supabaseUser = res.locals.user as {id: string};
+  const parsedUserId = await getNumericUserId(supabaseUser.id);
   const parsedPricePerDay = Number(pricePerDay);
+
+  if (!parsedUserId) {
+    return res.status(401).json({ error: 'User not found' });
+  }
 
   if (!title || Number.isNaN(parsedPricePerDay) || parsedPricePerDay <= 0) {
     return res.status(400).json({ error: 'title and a positive pricePerDay are required' });
@@ -371,14 +392,17 @@ listingsRouter.patch('/:id', upload.single('image'), async (req, res) => {
   return res.json({ data: { ...updatedListing, image_url: imageUrl } });
 });
 
-listingsRouter.delete('/:id', async (req, res) => {
+listingsRouter.delete('/:id', requireAuth, async (req, res) => {
   const listingId = Number(req.params.id);
   if (Number.isNaN(listingId)) {
     return res.status(400).json({ error: 'Invalid listing id' });
   }
+  const supabaseUser = res.locals.user as {id: string};
+  const parsedUserId = await getNumericUserId(supabaseUser.id);
 
-  const { user_id } = req.body as { user_id?: number | string };
-  const parsedUserId = Number(user_id);
+  if (!parsedUserId) {
+    return res.status(401).json({ error: 'User not found' });
+  }
   if (Number.isNaN(parsedUserId)) {
     return res.status(400).json({ error: 'user_id is required and must be a number' });
   }

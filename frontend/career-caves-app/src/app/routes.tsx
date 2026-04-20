@@ -4,6 +4,9 @@ import DiscoverPage from '../pages/DiscoverPage.tsx';
 import LendingPage from '../pages/LendingPage.tsx';
 import MessagesPage from '../pages/MessagesPage.tsx';
 import ProfilePage from '../pages/ProfilePage.tsx';
+import LoginPage from '../pages/LoginPage.tsx';
+import SignupPage from '../pages/SignupPage.tsx';
+import ProtectedRoute from '../components/ProtectedRoute.tsx';
 
 export interface Rental {
   id: string;
@@ -19,6 +22,9 @@ interface AppRoutesProps {
 export default function AppRoutes({ rentals }: AppRoutesProps) {
   return (
     <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      
       <Route path="/" element={<DashboardPage rentals={rentals} />} />
       <Route path="/discover" element={<DiscoverPage />} />
       <Route path="/lending" element={<LendingPage />} />
