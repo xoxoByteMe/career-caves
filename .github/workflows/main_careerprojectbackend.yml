@@ -15,6 +15,10 @@ jobs:
     permissions:
       contents: read #This is required for actions/checkout
 
+    defaults:
+      run:
+        working-directory: backend
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -54,6 +58,7 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DD1AD44B98964AAC87341B35076F9548 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2963A3056E174FD882D320A42FF29704 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_804C805385E2401EAC14D44CBF773AE4 }}
+          
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
