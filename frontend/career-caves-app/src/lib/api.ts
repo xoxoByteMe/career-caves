@@ -22,6 +22,11 @@ export interface Conversation {
   user1_id: number;
   user2_id: number;
   created_at?: string | null;
+  current_user_id?: number;
+  other_user_id?: number;
+  other_user_name?: string | null;
+  other_user_email?: string | null;
+  listing_title?: string | null;
 }
 
 export interface Message {
@@ -193,8 +198,23 @@ export async function getOrCreateConversation(input: {
   return parseJsonResponse<Conversation>(response);
 }
 
+export async function getMyConversations(): Promise<Conversation[]> {
+  const authHeaders = await getAuthHeaders();
+
+  const response = await fetch(`${apiBaseUrl}/api/conversations`, {
+    headers: authHeaders,
+  });
+
+  return parseJsonResponse<Conversation[]>(response);
+}
+
 export async function getMessages(conversationId: number): Promise<Message[]> {
-  const response = await fetch(`${apiBaseUrl}/api/messages/${conversationId}`);
+  const authHeaders = await getAuthHeaders();
+
+  const response = await fetch(`${apiBaseUrl}/api/messages/${conversationId}`, {
+    headers: authHeaders,
+  });
+
   return parseJsonResponse<Message[]>(response);
 }
 
@@ -203,9 +223,12 @@ export async function sendMessage(input: {
   sender_id: number;
   body: string;
 }): Promise<Message> {
+  const authHeaders = await getAuthHeaders();
+
   const response = await fetch(`${apiBaseUrl}/api/messages`, {
     method: 'POST',
     headers: {
+      ...authHeaders,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(input),
