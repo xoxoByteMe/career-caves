@@ -1,32 +1,48 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext'; 
 
 export default function ProfilePage() {
+  const { user } = useAuth(); // Grab the live user from Supabase
   const [isEditing, setIsEditing] = useState(false);
   
-  // MOCK DATA: Replace this state with a Supabase auth hook 
-  // (e.g., const { user } = useAuth(); )
+  // Initialize the profile with real Supabase data, falling back to placeholders 
+  // for data you haven't built database tables for yet (like measurements).
   const [profile, setProfile] = useState({
-    name: 'Esther Olatunji',
-    email: 'esther@ufl.edu',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Esther+Olatunji&background=C154C1&color=fff',
+    name: user?.user_metadata?.name || 'Gator User', // Pulls from Supabase metadata
+    email: user?.email || 'No email provided',       // Pulls from Supabase auth
+    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'Gator User')}&background=C154C1&color=fff`,
     isUFVerified: true,
-    joinDate: 'August 2025',
+    joinDate: new Date(user?.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     measurements: {
       topSize: 'M',
       bottomSize: '8',
       shoeSize: '8.5',
       height: "5'6\"",
     },
-    stats: { rating: 4.9, rentalsCompleted: 12, itemsListed: 4 }
+    stats: { rating: 5.0, rentalsCompleted: 0, itemsListed: 0 }
   });
 
-  // Temporary state for the edit form so we can cancel without saving
+  // Keep the profile synced if the user object loads slightly after the component mounts
+  useEffect(() => {
+    if (user) {
+      setProfile(prev => ({
+        ...prev,
+        name: user.user_metadata?.name || prev.name,
+        email: user.email || prev.email,
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.user_metadata?.name || 'Gator User')}&background=C154C1&color=fff`,
+        joinDate: new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      }));
+    }
+  }, [user]);
+
   const [editForm, setEditForm] = useState(profile.measurements);
   const [editName, setEditName] = useState(profile.name);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    // Note: To permanently save the name, you would eventually need to update 
+    // the Supabase user_metadata here. For now, we update the local state.
     setProfile({
       ...profile,
       name: editName,
@@ -34,6 +50,38 @@ export default function ProfilePage() {
     });
     setIsEditing(false);
   };
+  // const [isEditing, setIsEditing] = useState(false);
+  
+  // // MOCK DATA: Replace this state with a Supabase auth hook 
+  // // (e.g., const { user } = useAuth(); )
+  // const [profile, setProfile] = useState({
+  //   name: 'Esther Olatunji',
+  //   email: 'esther@ufl.edu',
+  //   avatarUrl: 'https://ui-avatars.com/api/?name=Esther+Olatunji&background=C154C1&color=fff',
+  //   isUFVerified: true,
+  //   joinDate: 'August 2025',
+  //   measurements: {
+  //     topSize: 'M',
+  //     bottomSize: '8',
+  //     shoeSize: '8.5',
+  //     height: "5'6\"",
+  //   },
+  //   stats: { rating: 4.9, rentalsCompleted: 12, itemsListed: 4 }
+  // });
+
+  // // Temporary state for the edit form so we can cancel without saving
+  // const [editForm, setEditForm] = useState(profile.measurements);
+  // const [editName, setEditName] = useState(profile.name);
+
+  // const handleSaveProfile = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setProfile({
+  //     ...profile,
+  //     name: editName,
+  //     measurements: editForm
+  //   });
+  //   setIsEditing(false);
+  // };
 
   return (
     <div className="page-padding profile-page">
