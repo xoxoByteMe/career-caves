@@ -1,0 +1,36 @@
+CAREER CAVES - QUICK USER GUIDE
+
+1) Create an account or sign in
+- Open the app in your browser.
+- New users: go to Signup and create an account.
+    - You will need to use a real email and confirm email from your inbox
+    - login for demo if having issues: 
+    user: toledov@ufl.edu  
+    pass: Albert123
+- Returning users: go to Login and sign in.
+
+2) Dashboard
+- After login, you land on the Dashboard.
+- Use the search bar to filter trending listings by title, category, size, or condition.
+- Select a listing card to view listing details.
+- Check the weather panel for current conditions and today's high/low in Gainesville.
+
+3) Discover listings
+- Open Discover to browse available items from other users with filters
+- Review listing details before deciding to message the owner.
+
+4) Create and manage your listings
+- Open Lending to create a new listing.
+- Add title, price per day, category, size, condition, and optional image.
+- Update or remove your listings from the same page when needed.
+
+5) Messaging
+- Open Messages to view your conversations.
+- Select a conversation and send messages to coordinate rental details.
+
+6) Profile
+- Open Profile to review account information and app-related profile details.
+
+Tips
+- If pages do not load, confirm backend and frontend dev servers are both running.
+- If listing actions fail refresh the page

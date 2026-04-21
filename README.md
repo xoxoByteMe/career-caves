@@ -2,6 +2,14 @@
 The platform for young professionals to find professional business wear.
 https://career-caves.vercel.app/
 
+## Documentation
+
+- [Quick User Guide](USER_GUIDE.txt)
+
+### Entity Relationship Diagram (ERD)
+
+![Career Caves ERD](resources/erd.png)
+
 ## Project Structure
 
 ```
