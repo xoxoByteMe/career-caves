@@ -7,12 +7,33 @@ interface DashboardPageProps {
   rentals: Rental[];
 }
 
+interface WeatherResponse {
+  current?: {
+    temperature_2m?: number;
+  };
+  daily?: {
+    temperature_2m_max?: number[];
+    temperature_2m_min?: number[];
+  };
+  hourly?: {
+    temperature_2m?: number[];
+  };
+}
+
+interface WeatherSnapshot {
+  current: number;
+  high: number;
+  low: number;
+}
+
 export default function DashboardPage({ rentals }: DashboardPageProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [todayWeather, setTodayWeather] = useState<WeatherSnapshot | null>(null);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +59,79 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
     }
 
     void loadListings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadWeather() {
+      try {
+        setWeatherError(null);
+
+        const weatherLocation = {
+          latitude: 29.6516,
+          longitude: -82.3248,
+        };
+
+        // API requirement
+        const endpoint = 'https://api.open-meteo.com/v1/forecast';
+        const params = new URLSearchParams({
+          latitude: weatherLocation.latitude.toString(),
+          longitude: weatherLocation.longitude.toString(),
+          current: 'temperature_2m',
+          daily: 'temperature_2m_max,temperature_2m_min',
+          forecast_days: '1',
+          timezone: 'auto',
+          temperature_unit: 'fahrenheit',
+        });
+
+        const response = await fetch(`${endpoint}?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error('Failed to load weather');
+        }
+
+        const data = (await response.json()) as WeatherResponse;
+        const currentTemp = data.current?.temperature_2m;
+        const high = data.daily?.temperature_2m_max?.[0];
+        const low = data.daily?.temperature_2m_min?.[0];
+
+        if (currentTemp === undefined || high === undefined || low === undefined) {
+          const fallbackTemps = data.hourly?.temperature_2m;
+          if (!fallbackTemps || fallbackTemps.length === 0) {
+            throw new Error('Weather data unavailable');
+          }
+
+          if (isMounted) {
+            setTodayWeather({
+              current: Math.round(fallbackTemps[0]),
+              high: Math.round(Math.max(...fallbackTemps)),
+              low: Math.round(Math.min(...fallbackTemps)),
+            });
+          }
+
+          return;
+        }
+
+        if (isMounted) {
+          setTodayWeather({
+            current: Math.round(currentTemp),
+            high: Math.round(high),
+            low: Math.round(low),
+          });
+        }
+
+      } catch (error) {
+        if (isMounted) {
+          setWeatherError(error instanceof Error ? error.message : 'Could not load weather');
+        }
+      }
+    }
+
+    void loadWeather();
 
     return () => {
       isMounted = false;
@@ -72,6 +166,22 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </header>
+
+      <section className="weather-modal-wrap" aria-live="polite">
+        <div className="weather-modal">
+          {weatherError ? (
+            <span>Weather unavailable</span>
+          ) : todayWeather === null ? (
+            <span>Loading weather...</span>
+          ) : (
+            <>
+              <p className="weather-chip-location">Gainesville Weather</p>
+              <p className="weather-chip-current">{todayWeather.current} F</p>
+              <p className="weather-chip-range">High: {todayWeather.high} F Low: {todayWeather.low} F</p>
+            </>
+          )}
+        </div>
+      </section>
 
       <section className="rental-carousel">
         <h2>Your Rentals</h2>

@@ -334,6 +334,49 @@
   background: var(--bg-secondary);
 }
 
+.weather-modal-wrap {
+  padding: 14px 32px 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.weather-modal {
+  min-width: 220px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid #c8d4f0;
+  background: linear-gradient(135deg, #f4f8ff 0%, #ecf3ff 100%);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  box-shadow: 0 6px 18px rgba(7, 44, 110, 0.1);
+}
+
+.weather-chip-location {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #26457a;
+  letter-spacing: 0.02em;
+}
+
+.weather-chip-current {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+  color: #0f2a59;
+}
+
+.weather-chip-range {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #355a95;
+}
+
 .rental-thumb {
   background: var(--border-color);
   height: 40px;
