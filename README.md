@@ -1,6 +1,14 @@
 # CAREER CAVES
 The platform for young professionals to find professional business wear.
 
+## Documentation
+
+- [Quick User Guide](USER_GUIDE.txt)
+
+### Entity Relationship Diagram (ERD)
+
+![Career Caves ERD](resources/erd.png)
+
 ## Project Structure
 
 ```
