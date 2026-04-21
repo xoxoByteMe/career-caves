@@ -7,11 +7,58 @@ interface DashboardPageProps {
   rentals: Rental[];
 }
 
+interface OpenMeteoResponse {
+  hourly: {
+    time: string[];
+    temperature_2m: number[];
+  };
+}
+
+interface WeatherSummary {
+  locationLabel: string;
+  minTempC: number;
+  maxTempC: number;
+  currentTempC: number;
+  asOfTime: string;
+}
+
+const weatherLocation = {
+  label: 'Gainesville, FL',
+  latitude: 29.6516,
+  longitude: -82.3248,
+};
+
+function getClosestTemperatureIndex(timestamps: string[]): number {
+  const now = Date.now();
+  let closestIndex = 0;
+  let smallestDifference = Number.POSITIVE_INFINITY;
+
+  timestamps.forEach((timeValue, index) => {
+    const difference = Math.abs(new Date(timeValue).getTime() - now);
+    if (difference < smallestDifference) {
+      smallestDifference = difference;
+      closestIndex = index;
+    }
+  });
+
+  return closestIndex;
+}
+
+function formatAsOfTime(isoTime: string): string {
+  return new Date(isoTime).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export default function DashboardPage({ rentals }: DashboardPageProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [weather, setWeather] = useState<WeatherSummary | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +90,68 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadWeather() {
+      setIsLoadingWeather(true);
+      setWeatherError(null);
+
+      // API requirement 
+      const endpoint = 'https://api.open-meteo.com/v1/forecast';
+      const params = new URLSearchParams({
+        latitude: weatherLocation.latitude.toString(),
+        longitude: weatherLocation.longitude.toString(),
+        hourly: 'temperature_2m',
+        forecast_days: '1',
+        timezone: 'auto',
+      });
+
+      try {
+        const response = await fetch(`${endpoint}?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`Weather request failed (${response.status})`);
+        }
+
+        const payload = (await response.json()) as OpenMeteoResponse;
+        const times = payload.hourly?.time ?? [];
+        const temperatures = payload.hourly?.temperature_2m ?? [];
+
+        if (times.length === 0 || temperatures.length === 0) {
+          throw new Error('Weather data is unavailable right now.');
+        }
+
+        const closestIndex = getClosestTemperatureIndex(times);
+        const minTempC = Math.min(...temperatures);
+        const maxTempC = Math.max(...temperatures);
+
+        if (isMounted) {
+          setWeather({
+            locationLabel: weatherLocation.label,
+            minTempC,
+            maxTempC,
+            currentTempC: temperatures[closestIndex],
+            asOfTime: formatAsOfTime(times[closestIndex]),
+          });
+        }
+      } catch (error) {
+        if (isMounted) {
+          setWeatherError(error instanceof Error ? error.message : 'Could not load weather forecast.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingWeather(false);
+        }
+      }
+    }
+
+    void loadWeather();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <>
       <header className="dashboard-header">
@@ -52,6 +161,36 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
           className="search-input"
         />
       </header>
+
+      <section className="weather-section" aria-label="Current day weather forecast">
+        <div className="weather-card">
+          <div className="weather-card__left">
+            <p className="weather-eyebrow">Today&apos;s weather</p>
+            {isLoadingWeather && <p className="weather-status">Loading forecast...</p>}
+            {weatherError && !isLoadingWeather && <p className="text-error">{weatherError}</p>}
+            {weather && !isLoadingWeather && !weatherError && (
+              <>
+                <h3 className="weather-location">{weather.locationLabel}</h3>
+                <p className="weather-current">{Math.round(weather.currentTempC)}°C</p>
+                <p className="weather-updated">As of {weather.asOfTime}</p>
+              </>
+            )}
+          </div>
+
+          {weather && !isLoadingWeather && !weatherError && (
+            <div className="weather-card__right" aria-label="Daily temperature range">
+              <div className="weather-stat">
+                <span className="weather-stat__label">Low</span>
+                <span className="weather-stat__value">{Math.round(weather.minTempC)}°C</span>
+              </div>
+              <div className="weather-stat">
+                <span className="weather-stat__label">High</span>
+                <span className="weather-stat__value">{Math.round(weather.maxTempC)}°C</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="rental-carousel">
         <h2>Your Rentals</h2>
