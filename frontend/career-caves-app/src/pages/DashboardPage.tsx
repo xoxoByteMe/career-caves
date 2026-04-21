@@ -12,6 +12,7 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
   const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +44,23 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
     };
   }, []);
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredListings =
+    normalizedQuery.length === 0
+      ? listings
+      : listings.filter((listing) => {
+          const haystack = [
+            listing.title,
+            listing.category ?? '',
+            listing.size ?? '',
+            listing.condition ?? '',
+          ]
+            .join(' ')
+            .toLowerCase();
+
+          return haystack.includes(normalizedQuery);
+        });
+
   return (
     <>
       <header className="dashboard-header">
@@ -50,6 +68,8 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
           type="text"
           placeholder="Search by event, size, or type..."
           className="search-input"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </header>
 
@@ -89,7 +109,11 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
             <p className="text-muted">No listings yet. Add one from the Lending page.</p>
           )}
 
-          {listings.map((listing) => (
+          {!isLoadingListings && !listingsError && listings.length > 0 && filteredListings.length === 0 && (
+            <p className="text-muted">No results for "{searchQuery.trim()}".</p>
+          )}
+
+          {filteredListings.map((listing) => (
             <div
               key={listing.listing_id ?? listing.id ?? `${listing.title}-${listing.price_per_day}`}
               className="listing-card"
