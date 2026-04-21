@@ -16,9 +16,9 @@ interface OpenMeteoResponse {
 
 interface WeatherSummary {
   locationLabel: string;
-  minTempC: number;
-  maxTempC: number;
-  currentTempC: number;
+  minTempF: number;
+  maxTempF: number;
+  currentTempF: number;
   asOfTime: string;
 }
 
@@ -27,6 +27,10 @@ const weatherLocation = {
   latitude: 29.6516,
   longitude: -82.3248,
 };
+
+function celsiusToFahrenheit(celsius: number): number {
+  return (celsius * 9) / 5 + 32;
+}
 
 function getClosestTemperatureIndex(timestamps: string[]): number {
   const now = Date.now();
@@ -128,9 +132,9 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
         if (isMounted) {
           setWeather({
             locationLabel: weatherLocation.label,
-            minTempC,
-            maxTempC,
-            currentTempC: temperatures[closestIndex],
+            minTempF: celsiusToFahrenheit(minTempC),
+            maxTempF: celsiusToFahrenheit(maxTempC),
+            currentTempF: celsiusToFahrenheit(temperatures[closestIndex]),
             asOfTime: formatAsOfTime(times[closestIndex]),
           });
         }
@@ -171,7 +175,7 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
             {weather && !isLoadingWeather && !weatherError && (
               <>
                 <h3 className="weather-location">{weather.locationLabel}</h3>
-                <p className="weather-current">{Math.round(weather.currentTempC)}°C</p>
+                <p className="weather-current">{Math.round(weather.currentTempF)}°F</p>
                 <p className="weather-updated">As of {weather.asOfTime}</p>
               </>
             )}
@@ -181,11 +185,11 @@ export default function DashboardPage({ rentals }: DashboardPageProps) {
             <div className="weather-card__right" aria-label="Daily temperature range">
               <div className="weather-stat">
                 <span className="weather-stat__label">Low</span>
-                <span className="weather-stat__value">{Math.round(weather.minTempC)}°C</span>
+                <span className="weather-stat__value">{Math.round(weather.minTempF)}°F</span>
               </div>
               <div className="weather-stat">
                 <span className="weather-stat__label">High</span>
-                <span className="weather-stat__value">{Math.round(weather.maxTempC)}°C</span>
+                <span className="weather-stat__value">{Math.round(weather.maxTempF)}°F</span>
               </div>
             </div>
           )}
